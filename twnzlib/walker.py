@@ -63,7 +63,8 @@ def simplify_path(walking_path):
 
         # If the direction is 0, 90, 180, or 270 degrees, skip the current point
         if delta_x == 0 or delta_y == 0 or abs(delta_x) == abs(delta_y):
-            continue
+            if abs(delta_x) + abs(delta_y) <= 3:
+                continue
 
         # Otherwise, add the current point to the simplified path
         simplified_path.append(point)
