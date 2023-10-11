@@ -22,17 +22,21 @@ if __name__ == "__main__":
             if json_msg["type"] == phoenix.Type.packet_send.value:
                 print("[SEND]: " + json_msg["packet"])
             elif json_msg["type"] == phoenix.Type.packet_recv.value:
-                print("[RECV]: " + json_msg["packet"])
+
                 packet = json_msg['packet']
                 head = packet.split()[0]
 
                 if head == 'hidn':
+                    print("[RECV]: " + json_msg["packet"])
                     _, deg, x, y = eval("(" + ",".join(packet.split()[1:])+")")
-                    points.append((y, x, deg))
+                    points.append((x, y, deg))
                     print("*** hidn received, saving a marker", points[-1])
                     if len(points) > 2:
                         points = points[1:]
+                    if len(points) >= 2:
                         print("*** intersection from last 2 cracks", str(find_intersection(points[0], points[1])))
+                else:
+                    pass
         else:
             sleep(0.01) 
 
