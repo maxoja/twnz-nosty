@@ -1,5 +1,5 @@
 import math
-from conversions import ndeg_to_rdeg
+from twnzlib.conversions import ndeg_to_rdeg
 
 
 def find_intersection(npoint1, npoint2, map_w, map_h):
