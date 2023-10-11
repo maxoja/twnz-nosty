@@ -1,8 +1,7 @@
 from phoenixapi import phoenix
 from time import sleep
 import json
-from twnz import *
-
+from twnzlib import *
 
 
 if __name__ == "__main__":
@@ -34,7 +33,8 @@ if __name__ == "__main__":
                     if len(points) > 2:
                         points = points[1:]
                     if len(points) >= 2:
-                        print("*** intersection from last 2 cracks", str(find_intersection(points[0], points[1])))
+                        s = str(find_intersection(points[0], points[1], 90, 90))
+                        print("*** intersection from last 2 cracks", s)
                 else:
                     pass
         else:
