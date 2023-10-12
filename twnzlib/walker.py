@@ -1,7 +1,13 @@
 from collections import deque
 
+import numpy as np
 
-def find_walk_path(map_array, starting_point, end_point):
+
+def find_walk_path(map_array: np.ndarray, starting_point, end_point):
+    map_array = map_array.copy()
+    starting_point = tuple(starting_point)
+    end_point = tuple(end_point)
+    # takes yx and yx
     # Define possible movement directions (up, down, left, right).
     directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
@@ -63,7 +69,7 @@ def simplify_path(walking_path):
 
         # If the direction is 0, 90, 180, or 270 degrees, skip the current point
         if delta_x == 0 or delta_y == 0 or abs(delta_x) == abs(delta_y):
-            if abs(delta_x) + abs(delta_y) <= 3:
+            if abs(delta_x) + abs(delta_y) <= 5:
                 continue
 
         # Otherwise, add the current point to the simplified path
