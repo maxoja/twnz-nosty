@@ -18,14 +18,14 @@ def image_to_binary_array(image_path):
 
     # Threshold the image to create a binary array
     threshold = 128  # You can adjust the threshold as needed
-    binary_array = (image_array > threshold).astype(int)
+    binary_array = (image_array > 240).astype(int)
 
     return binary_array
 
 
 if __name__ == "__main__":
     # Specify the path to your input image
-    input_image_path = '/Users/twnz/Documents/Repos/twnz-nosty/src/hideout5.png'
+    input_image_path = '/Users/twnz/Documents/Repos/twnz-nosty/src/17.png'
 
     # Convert the image to a binary array
     binary_array = image_to_binary_array(input_image_path)
