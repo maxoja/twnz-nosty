@@ -8,7 +8,7 @@ from twnzlib import *
 
 
 walk_cd_timer = -1
-walk_cd_step = 1.0
+walk_cd_step = 0.8
 
 
 def walk_step(api: phoenix.Api, y: int, x: int):
