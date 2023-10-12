@@ -32,7 +32,7 @@ class Api:
 
     def __init__(self, port : int) -> None:
         self._socket = socket.socket()
-        print('connecting')
+        print('connecting to', Api.HOST, port)
         self._socket.connect((Api.HOST, port))
 
         self._do_work = True
