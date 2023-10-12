@@ -3,8 +3,9 @@ import numpy as np
 from PIL.Image import Resampling
 
 
-def image_to_binary_array(image_path):
+def image_to_binary_array(map_id: int):
     # Open the image using Pillow
+    image_path = f"src/{map_id}.png"
     image = Image.open(image_path)
 
     # Downsample the image by 2 times
@@ -18,7 +19,7 @@ def image_to_binary_array(image_path):
 
     # Threshold the image to create a binary array
     threshold = 128  # You can adjust the threshold as needed
-    binary_array = (image_array > 240).astype(int)
+    binary_array = (image_array > 215).astype(int)
 
     return binary_array
 
