@@ -45,9 +45,9 @@ def walk_along_path(api: phoenix.Api, path_points: list, states: WalkStates):
         walk_step(api, y, x, states)
 
         cur_y, cur_x, _ = fetch_current_y_x_map_id(api)
-        # while (cur_y, cur_x) != (y, x):
-        #     sleep(0.01)
-        #     cur_y, cur_x, _ = fetch_current_y_x_map_id(api)
+        while (cur_y, cur_x) != (y, x):
+            sleep(0.01)
+            cur_y, cur_x, _ = fetch_current_y_x_map_id(api)
 
 
 def walk_to(api: phoenix.Api, map_array: np.ndarray, dest_yx: tuple, states: WalkStates):
