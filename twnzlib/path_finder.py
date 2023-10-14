@@ -11,7 +11,7 @@ def find_walk_path_pruned(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple
 
 
 def __debug_path_finding(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple, walk_path: list):
-    logging_map = map_array.copy()
+    logging_map = np.copy(map_array)
     start_y, start_x = start_yx
     dest_y, dest_x = dest_yx
     for y,x in walk_path:
@@ -23,7 +23,6 @@ def __debug_path_finding(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple,
 
 
 def __find_walk_path(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple) -> [tuple]:
-    map_array = map_array.copy() # unlikely solve anything
     __debug_path_finding(map_array, start_yx, dest_yx, [])
 
     # Define possible movement directions (up, down, left, right).
@@ -49,22 +48,28 @@ def __find_walk_path(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple) -> 
         # Check if we've reached the destination.
         if (y, x) == dest_yx:
             break
+        if visited[y][x]:
+            continue
+
+        visited[y][x] = True
 
         for dy, dx in dir_yx_deltas:
             new_y, new_x = y + dy, x + dx
 
-            # Check if the new position is within the map boundaries and is walkable.
-            if 0 <= new_y < rows and 0 <= new_x < cols and map_array[new_y][new_x] == 1 and not visited[new_y][new_x]:
-                visited[new_y][new_x] = True
-                queue.append((new_y, new_x))
-                parent[(new_y, new_x)] = (y, x)
+            if not new_y in range(rows) or not new_x in range(cols):
+                continue
+            if map_array[new_y][new_x] == 0:
+                continue
+            if visited[new_y][new_x]:
+                continue
+
+            queue.append((new_y, new_x))
+            parent[(new_y, new_x)] = (y, x)
 
     # Reconstruct the path from the destination to the starting point.
     path = []
     current_point = dest_yx
-    print('tracing back')
     while current_point != start_yx:
-        print(current_point)
         path.append(current_point)
         current_point = parent[current_point]
     path.append(start_yx)
