@@ -157,7 +157,7 @@
         "schema": [
             {
                 "system": false,
-                "id": "scghlskd",
+                "id": "1xhrx6cc",
                 "name": "name",
                 "type": "text",
                 "required": false,
@@ -171,7 +171,7 @@
             },
             {
                 "system": false,
-                "id": "kwilborf",
+                "id": "jw5qmfjc",
                 "name": "email",
                 "type": "email",
                 "required": false,
@@ -184,7 +184,7 @@
             },
             {
                 "system": false,
-                "id": "er5anrrv",
+                "id": "rvnxebc4",
                 "name": "amountGbp",
                 "type": "json",
                 "required": false,
@@ -200,7 +200,7 @@
         "updateRule": null,
         "deleteRule": null,
         "options": {
-            "query": "-- assume that charges won't make overspending\nSELECT\n  users.id,\n  users.name,\n  users.email,\n  (SUM(topups.amountGbp) - SUM(charges.amountGbp)) as amountGbp\nFROM users\n  JOIN topups ON topups.user = users.id\n  JOIN charges\n    ON charges.users LIKE '%' || users.id || '%'\nGROUP BY\n  users.id, users.name, users.email;"
+            "query": "-- assume that charges won't make overspending\nSELECT\n  users.id,\n  users.name,\n  users.email,\n  COALESCE(SUM(topups.amountGbp) - SUM(charges.amountGbp), 0) as amountGbp\nFROM users\n  LEFT JOIN topups ON topups.user = users.id\n  LEFT JOIN charges\n    ON charges.users LIKE '%' || users.id || '%'\nGROUP BY\n  users.id, users.name, users.email;"
         }
     }
 ]
