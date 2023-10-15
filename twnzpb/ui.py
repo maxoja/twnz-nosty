@@ -59,7 +59,7 @@ class LoginApplication:
             self.show_info("Failure", msg)
             return
 
-        credits_left = flows.get_credits(pb)
+        credits_left = flows.get_credits(self.pb_client)
         if credits_left > 0:
             msg = (f"You logged in with credit left {credits_left}\n"
                    f"Bot program is starting")
