@@ -1,6 +1,9 @@
+from pocketbase import PocketBase
+
 import twnzlib.config
 from twnzlib import *
 from medals import *
+from twnzpb import ui
 
 guri_points = []
 
@@ -44,38 +47,25 @@ def go_to_treasure(api: phoenix.Api, treasure_point_yx, states: WalkStates):
 
 
 if __name__ == "__main__":
-    import tkinter as tk
+    login_out = {
+        ui.K_RESULT: False
+    }
+
+    pb = PocketBase("https://pb-twnz-nosty.hop.sh/")
+    ui.LoginApplication(pb, login_out)
+
+    if not login_out[ui.K_RESULT]:
+        exit(0)
 
     ports = returnAllPorts()
     if len(ports) == 1:
         port = [int(ports[0][1])]
-
-    # List of button labels
-    button_labels = [ '|'.join(p) for p in ports ]
-
-    # Create the main window
-    root = tk.Tk()
-    root.title("Simple GUI Example")
-
-    # Create a label to display messages
-    label = tk.Label(root, text="")
-    label.pack()
-
-    # Define a function that will be called when a button is clicked
-    def button_click(button_text):
-        port.clear()
-        port.append(int(button_text.split("|")[1]))
-        label.config(text=f"Button {button_text} clicked")
-        root.destroy()
-
-    # Create buttons from the list
-    for button_label in button_labels:
-        button = tk.Button(root, text=button_label, command=lambda label=button_label: button_click(label))
-        button.pack()
+    else:
+        port = []
 
     # Start the main loop
     if not port:
-        root.mainloop()
+        ui.PortSelectionGUI(ports, port)
 
     # port = input("enter port: ")
     api = phoenix.Api(int(port[0]))

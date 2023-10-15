@@ -4,11 +4,17 @@ from pocketbase import PocketBase  # Import PocketBase from your module
 from twnzpb import flows
 import os
 
+# credit for icon https://icon-icons.com/icon/random-line/72612
+K_RESULT = 'result'
+
+
 class LoginApplication:
-    def __init__(self, pb_client: PocketBase):
+    def __init__(self, pb_client: PocketBase, out_result: dict):
         self.pb_client = pb_client
+        self.out_result = out_result
         self.root = tk.Tk()
         self.root.title("Twnz Nosty Login")
+        self.root.wm_title("Twnz Nosty Login")
         # self.root.iconbitmap(r'')
 
         icon_name = 'icon.png'
@@ -63,6 +69,7 @@ class LoginApplication:
         if credits_left > 0:
             msg = (f"You logged in with credit left {credits_left}\n"
                    f"Bot program is starting")
+            self.out_result[K_RESULT] = True
             self.show_info("Login Success", msg)
             self.root.quit()
             self.root.destroy()
@@ -103,3 +110,32 @@ class LoginApplication:
 
     def run_mainloop(self):
         self.root.mainloop()
+
+class PortSelectionGUI:
+    def __init__(self, ports: [tuple], out_port: list):
+        self.ports = ports
+        self.out_port = out_port
+        # List of button labels
+        self.button_labels = ['|'.join(p) for p in self.ports]
+
+        # Create the main window
+        self.root = tk.Tk()
+        self.root.title("Twnz Nosty Run")
+
+        # Create a label to display messages
+        self.label = tk.Label(self.root, text="")
+        self.label.pack()
+
+        # Create buttons from the list
+        for button_label in self.button_labels:
+            button = tk.Button(self.root, text=button_label, command=lambda label=button_label: self.button_click(label))
+            button.pack()
+
+        self.root.mainloop()
+
+    def button_click(self, button_text):
+        self.out_port.clear()
+        self.out_port.append(int(button_text.split("|")[1]))
+        self.label.config(text=f"Button {button_text} clicked")
+        self.root.quit()
+        self.root.destroy()
