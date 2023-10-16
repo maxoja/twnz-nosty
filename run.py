@@ -1,9 +1,14 @@
+import sys
+
+from PyQt5.QtWidgets import QApplication
+
 from pocketbase import PocketBase
 
 import twnzlib.config
 from twnzlib import *
 from medals import *
 from twnzpb import ui
+from twnzpb.ui import PortSelectionGUI
 
 guri_points = []
 
@@ -52,20 +57,34 @@ if __name__ == "__main__":
     }
 
     pb = PocketBase("https://pb-twnz-nosty.hop.sh/")
-    ui.LoginApplication(pb, login_out).run_mainloop()
+    # ui.LoginApplication(pb, login_out).run_mainloop()
+
+    app = QApplication(sys.argv)
+    login_app = ui.LoginApplication(pb, login_out)
+    login_app.show()
+    app.exec_()
 
     if not login_out[ui.K_RESULT]:
         exit(0)
 
     ports = returnAllPorts()
-    if len(ports) == 1:
-        port = [int(ports[0][1])]
-    else:
-        port = []
+    port = []
+    # if len(ports) == 1:
+    #     port = [int(ports[0][1])]
+    # else:
+    #     port = []
 
     # Start the main loop
     if not port:
-        ui.PortSelectionGUI(ports, port).run_mainloop()
+        app = QApplication(sys.argv)
+        port_selection_app = PortSelectionGUI(ports, port)
+        port_selection_app.show()
+        app.exec_()
+        # ui.PortSelectionGUI(ports, port).run_mainloop()
+
+    if not port:
+        print('no port selected after port gui')
+        exit(1)
 
     # port = input("enter port: ")
     api = phoenix.Api(int(port[0]))
