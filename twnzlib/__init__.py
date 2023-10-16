@@ -7,3 +7,4 @@ from .guriguri import *
 from .path_finder import *
 from .walker import *
 from .utils import *
+from . import resource

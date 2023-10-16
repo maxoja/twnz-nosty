@@ -1,7 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox, PhotoImage
+from tkinter import Checkbutton, BooleanVar
+
 from pocketbase import PocketBase  # Import PocketBase from your module
 from twnzpb import flows
+from twnzlib import resource
 import os
 
 # credit for icon https://icon-icons.com/icon/random-line/72612
@@ -9,13 +12,42 @@ K_RESULT = 'result'
 
 
 class LoginApplication:
+
     def __init__(self, pb_client: PocketBase, out_result: dict):
         self.pb_client = pb_client
         self.out_result = out_result
         self.root = tk.Tk()
-        self.root.title("Twnz Nosty Login")
-        self.root.wm_title("Twnz Nosty Login")
+        self.root.title("Nosty Bot Login")
+        self.root.wm_title("Nosty Bot Login")
+        # Set the title bar background color to match the frame background
+        self.root.overrideredirect(True)  # Remove default title bar
+
+        self.title_bar = tk.Frame(self.root, background='#FEFBF4', height=20)
+        self.title_bar.pack(fill='x')
+        # Create Close and Minimize buttons on the title bar
+        self.close_button = tk.Button(self.title_bar, text='X', command=self.on_close_button_click)
+        self.minimize_button = tk.Button(self.title_bar, text='-', command=self.on_minimize_button_click)
+        # Position Close and Minimize buttons on the title bar
+        self.close_button.pack(side='right')
+        self.minimize_button.pack(side='right')
+        # Bind mouse events for dragging the window
+        self.title_bar.bind('<ButtonPress-1>', self.on_title_bar_click)
+        self.title_bar.bind('<B1-Motion>', self.on_title_bar_drag)
+        # Initialize variables for tracking the window position
+        self.x, self.y = 0, 0
+
+        # Configure background color
+
+        # self.root.protocol("WM_DELETE_WINDOW", on_destroy)
         # self.root.iconbitmap(r'')
+
+        # Create and configure the login form
+        self.login_frame = tk.Frame(self.root, background="#FEFBF4")
+        self.login_frame.pack(padx=10, pady=10)
+
+        # Define a custom style for the LoginApplication window
+        self.root.tk_setPalette(background='#FEFBF4')
+        # self.root.overrideredirect(True)
 
         icon_name = 'icon.png'
         icon_path = os.path.join('src', icon_name)
@@ -24,35 +56,70 @@ class LoginApplication:
         if os.path.isfile(icon_path):
             self.root.tk.call('wm', 'iconphoto', self.root._w, PhotoImage(file=icon_path))
 
-        # Create and configure the login form
-        self.login_frame = tk.Frame(self.root)
-        self.login_frame.pack(padx=10, pady=10)
+        second_color = '#353334'
 
-        self.email_label = tk.Label(self.login_frame, text="Email:")
-        self.email_label.grid(row=0, column=0)
-        self.email_entry = tk.Entry(self.login_frame)
+        self.email_label = tk.Label(self.login_frame, text="Email:", fg=second_color)
+        self.email_label.grid(row=0, column=0, sticky="w")
+        self.email_entry = tk.Entry(self.login_frame, bg=second_color)
         self.email_entry.grid(row=0, column=1)
+        self.email_entry.insert(0, resource.load_email())
 
-        self.password_label = tk.Label(self.login_frame, text="Password:")
-        self.password_label.grid(row=1, column=0)
-        self.password_entry = tk.Entry(self.login_frame, show="*")  # Use 'show' to hide the password
+        self.password_label = tk.Label(self.login_frame, text="Password:", fg=second_color)
+        self.password_label.grid(row=1, column=0, sticky="w")
+        self.password_entry = tk.Entry(self.login_frame, show="*", bg=second_color)  # Use 'show' to hide the password
         self.password_entry.grid(row=1, column=1)
+        self.password_entry.insert(0, resource.load_password())
+
+        self.remember_var = BooleanVar()
+        self.remember_var.set(resource.load_remember())
+        self.remember_checkbutton = Checkbutton(self.login_frame, text="Remember",
+                                                variable=self.remember_var)
+        self.remember_checkbutton.grid(row=2, column=1, columnspan=1, sticky="w")
 
         # Use lambda functions to pass parameters to login and activate_account
-        self.activation_button = tk.Button(self.login_frame, text="Account Activation", command=self.perform_activation)
-        self.activation_button.grid(row=2, column=0, columnspan=1, sticky="we")  # Set columnspan to 1 and sticky to "we"
-        self.reset_button = tk.Button(self.login_frame, text="Password Reset", command=self.account_password_reset)
-        self.reset_button.grid(row=2, column=1, columnspan=1, sticky="we")
-
         self.login_button = tk.Button(self.login_frame, text="Login", command=self.perform_login)
-        self.login_button.grid(row=3, column=0, columnspan=2, rowspan=2,sticky="we")  # Set columnspan to 2, rowspan to 2, and sticky to "we"
+        self.login_button.grid(row=3, column=0, columnspan=2, sticky="we")
+        self.activation_button = tk.Button(self.login_frame, text="Account Activation", command=self.perform_activation)
+        self.activation_button.grid(row=4, column=0, columnspan=1, sticky="we")
+        self.reset_button = tk.Button(self.login_frame, text="Password Reset", command=self.account_password_reset)
+        self.reset_button.grid(row=4, column=1, columnspan=1, sticky="we")
+
+        # Get the screen width and height
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        # Calculate the window position to center it on the screen
+        x = (screen_width - self.root.winfo_reqwidth()) // 2
+        y = (screen_height - self.root.winfo_reqheight()) // 2
+
+        # Set the window's position to center it
+        self.root.geometry(f"+{x}+{y}")
 
         self.email_entry.focus()
         self.root.bind('<Return>', self.on_return_key)
 
+
+    def on_close_button_click(self):
+        self.root.quit()
+        self.root.destroy()
+
+    def on_minimize_button_click(self):
+        self.root.iconify()
+
+
+    def on_title_bar_click(self, event):
+        self.x, self.y = event.x, event.y
+
+    def on_title_bar_drag(self, event):
+        new_x = self.root.winfo_x() + (event.x - self.x)
+        new_y = self.root.winfo_y() + (event.y - self.y)
+        self.root.geometry(f"+{new_x}+{new_y}")
+
+
     def perform_login(self):
         email = self.email_entry.get()
         password = self.password_entry.get()
+        remember = self.remember_var.get()
 
         if email == "" or password == "":
             self.show_info("Info", "Please fill email and password")
@@ -71,6 +138,12 @@ class LoginApplication:
                    f"Bot program is starting")
             self.out_result[K_RESULT] = True
             self.show_info("Login Success", msg)
+
+            if remember:
+                resource.save_cred(email, password, remember)
+            else:
+                resource.save_cred('','', False)
+
             self.root.quit()
             self.root.destroy()
             # TODO, start the bot, show credits
