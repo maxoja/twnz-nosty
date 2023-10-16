@@ -1,0 +1,1 @@
+@collection.activeUsers.id ?= id
