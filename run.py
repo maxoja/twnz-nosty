@@ -52,7 +52,7 @@ if __name__ == "__main__":
     }
 
     pb = PocketBase("https://pb-twnz-nosty.hop.sh/")
-    ui.LoginApplication(pb, login_out)
+    ui.LoginApplication(pb, login_out).run_mainloop()
 
     if not login_out[ui.K_RESULT]:
         exit(0)
@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     # Start the main loop
     if not port:
-        ui.PortSelectionGUI(ports, port)
+        ui.PortSelectionGUI(ports, port).run_mainloop()
 
     # port = input("enter port: ")
     api = phoenix.Api(int(port[0]))

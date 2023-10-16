@@ -1,7 +1,7 @@
 THIS_DIR=`realpath $0`
 
 rm -rf ./dist
-pyinstaller --onefile run.py
+pyinstaller --onefile --noconsole run.py
 mkdir -p ./dist/src
 cp ./src/* ./dist/src
 

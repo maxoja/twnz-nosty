@@ -131,11 +131,12 @@ class PortSelectionGUI:
             button = tk.Button(self.root, text=button_label, command=lambda label=button_label: self.button_click(label))
             button.pack()
 
-        self.root.mainloop()
-
     def button_click(self, button_text):
         self.out_port.clear()
         self.out_port.append(int(button_text.split("|")[1]))
         self.label.config(text=f"Button {button_text} clicked")
         self.root.quit()
         self.root.destroy()
+
+    def run_mainloop(self):
+        self.root.mainloop()
