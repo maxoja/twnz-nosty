@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, PhotoImage
-from tkinter import Checkbutton, BooleanVar
+from tkinter import Checkbutton, BooleanVar, StringVar
 
 from pocketbase import PocketBase  # Import PocketBase from your module
 from twnzpb import flows
@@ -9,6 +9,10 @@ import os
 
 # credit for icon https://icon-icons.com/icon/random-line/72612
 K_RESULT = 'result'
+clr_dark_gray = '#353334'
+clr_ph_text = 'grey'
+clr_ph_bg = clr_dark_gray
+clr_entry_text = '#CDCDCB'
 
 
 class LoginApplication:
@@ -19,27 +23,7 @@ class LoginApplication:
         self.root = tk.Tk()
         self.root.title("Nosty Bot Login")
         self.root.wm_title("Nosty Bot Login")
-        # Set the title bar background color to match the frame background
-        self.root.overrideredirect(True)  # Remove default title bar
-
-        self.title_bar = tk.Frame(self.root, background='#FEFBF4', height=20)
-        self.title_bar.pack(fill='x')
-        # Create Close and Minimize buttons on the title bar
-        self.close_button = tk.Button(self.title_bar, text='X', command=self.on_close_button_click)
-        self.minimize_button = tk.Button(self.title_bar, text='-', command=self.on_minimize_button_click)
-        # Position Close and Minimize buttons on the title bar
-        self.close_button.pack(side='right')
-        self.minimize_button.pack(side='right')
-        # Bind mouse events for dragging the window
-        self.title_bar.bind('<ButtonPress-1>', self.on_title_bar_click)
-        self.title_bar.bind('<B1-Motion>', self.on_title_bar_drag)
-        # Initialize variables for tracking the window position
         self.x, self.y = 0, 0
-
-        # Configure background color
-
-        # self.root.protocol("WM_DELETE_WINDOW", on_destroy)
-        # self.root.iconbitmap(r'')
 
         # Create and configure the login form
         self.login_frame = tk.Frame(self.root, background="#FEFBF4")
@@ -47,7 +31,6 @@ class LoginApplication:
 
         # Define a custom style for the LoginApplication window
         self.root.tk_setPalette(background='#FEFBF4')
-        # self.root.overrideredirect(True)
 
         icon_name = 'icon.png'
         icon_path = os.path.join('src', icon_name)
@@ -56,19 +39,30 @@ class LoginApplication:
         if os.path.isfile(icon_path):
             self.root.tk.call('wm', 'iconphoto', self.root._w, PhotoImage(file=icon_path))
 
-        second_color = '#353334'
+        # Email entry with StringVar
 
-        self.email_label = tk.Label(self.login_frame, text="Email:", fg=second_color)
-        self.email_label.grid(row=0, column=0, sticky="w")
-        self.email_entry = tk.Entry(self.login_frame, bg=second_color)
-        self.email_entry.grid(row=0, column=1)
-        self.email_entry.insert(0, resource.load_email())
+        self.email_var = StringVar()
+        self.email_var.trace("w", lambda name, index, mode, sv=self.email_var: self.placeholder_callback(sv, self.email_overlay_label, self.email_entry))
+        self.email_entry = tk.Entry(self.login_frame, bg=clr_dark_gray, fg=clr_entry_text, textvariable=self.email_var, justify='center')
+        self.email_entry.grid(row=0, column=0, columnspan=2, sticky="we")
+        self.email_overlay_label = tk.Label(self.login_frame, text="Email", fg=clr_ph_text, bg=clr_ph_bg)
+        def b(e):
+            self.email_entry.focus()
+            self.email_overlay_label.place_forget()
+        self.email_overlay_label.bind("<Button-1>", b)
+        self.email_var.set(resource.load_email())
 
-        self.password_label = tk.Label(self.login_frame, text="Password:", fg=second_color)
-        self.password_label.grid(row=1, column=0, sticky="w")
-        self.password_entry = tk.Entry(self.login_frame, show="*", bg=second_color)  # Use 'show' to hide the password
-        self.password_entry.grid(row=1, column=1)
-        self.password_entry.insert(0, resource.load_password())
+        # Password entry with StringVar
+        self.password_var = StringVar()
+        self.password_var.trace("w", lambda name, index, mode, sv=self.password_var: self.placeholder_callback(sv, self.password_overlay_label, self.password_entry))
+        self.password_entry = tk.Entry(self.login_frame, show="*", bg=clr_dark_gray, fg=clr_entry_text, textvariable=self.password_var, justify='center')
+        self.password_entry.grid(row=1, column=0, columnspan=2, sticky="we")
+        self.password_overlay_label = tk.Label(self.login_frame, text="Password", fg=clr_ph_text, bg=clr_ph_bg)
+        def a(e):
+            self.password_entry.focus()
+            self.password_overlay_label.place_forget()
+        self.password_overlay_label.bind("<Button-1>", a)
+        self.password_var.set(resource.load_password())
 
         self.remember_var = BooleanVar()
         self.remember_var.set(resource.load_remember())
@@ -99,12 +93,23 @@ class LoginApplication:
         self.root.bind('<Return>', self.on_return_key)
 
 
+    def placeholder_callback(self, sv, overlay, entry):
+        if sv.get() == "":
+            overlay.place(in_=entry, relx=0, rely=0.5, relwidth=1, relheight=1, anchor="w")
+            return
+        overlay.place_forget()
+
+
     def on_close_button_click(self):
         self.root.quit()
         self.root.destroy()
 
     def on_minimize_button_click(self):
+        if self.fold:
+            return
+        self.root.overrideredirect(False)
         self.root.iconify()
+        self.fold = True
 
 
     def on_title_bar_click(self, event):
