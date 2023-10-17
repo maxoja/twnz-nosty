@@ -233,3 +233,4 @@ fabric.properties
 sandbox*
 /pocketbase/*.zip
 /pocketbase/*cred.txt
+/src/cred.pickle
