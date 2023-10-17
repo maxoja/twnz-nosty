@@ -7,8 +7,7 @@ from pocketbase import PocketBase
 import twnzlib.config
 from twnzlib import *
 from medals import *
-from twnzpb import ui
-from twnzpb.ui import PortSelectionGUI
+import twnzui as ui
 
 guri_points = []
 
