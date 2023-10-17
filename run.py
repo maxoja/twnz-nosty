@@ -8,9 +8,9 @@ import twnzlib.config
 from twnzlib import *
 from medals import *
 import twnzui as ui
+from twnzui import PortSelectionGUI
 
 guri_points = []
-
 
 def handle_send(packet: str):
     print("[SEND]: " + packet)
@@ -62,24 +62,27 @@ if __name__ == "__main__":
     login_app = ui.LoginApplication(pb, login_out)
     login_app.show()
     app.exec_()
+    app.exit(0)
 
     if not login_out[ui.K_RESULT]:
         exit(0)
 
     ports = returnAllPorts()
     port = []
-    # if len(ports) == 1:
-    #     port = [int(ports[0][1])]
-    # else:
-    #     port = []
 
-    # Start the main loop
+    if len(ports) == 1:
+        port = [int(ports[0][1])]
+    else:
+        port = []
+
     if not port:
-        app = QApplication(sys.argv)
         port_selection_app = PortSelectionGUI(ports, port)
         port_selection_app.show()
+        print('exec')
         app.exec_()
-        # ui.PortSelectionGUI(ports, port).run_mainloop()
+        print('exiting')
+        app.exit(0)
+        print('exited')
 
     if not port:
         print('no port selected after port gui')
@@ -88,6 +91,8 @@ if __name__ == "__main__":
     # port = input("enter port: ")
     api = phoenix.Api(int(port[0]))
     walk_states = WalkStates()
+
+    print('starting api')
 
     while api.working():
         occasional_log(api)
