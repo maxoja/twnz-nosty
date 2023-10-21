@@ -234,3 +234,4 @@ sandbox*
 /pocketbase/*.zip
 /pocketbase/*cred.txt
 /src/cred.pickle
+/dist-archive/
