@@ -235,3 +235,4 @@ sandbox*
 /pocketbase/*cred.txt
 /src/cred.pickle
 /dist-archive/
+/temp
