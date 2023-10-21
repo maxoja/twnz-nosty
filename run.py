@@ -16,7 +16,7 @@ def handle_send(packet: str):
     print("[SEND]: " + packet)
 
 
-def handle_recv(api: phoenix.Api, packet: str, states: WalkStates):
+def handle_recv(api: phoenix.Api, packet: str):
     global guri_points
     head = packet.split()[0]
 
@@ -36,18 +36,18 @@ def handle_recv(api: phoenix.Api, packet: str, states: WalkStates):
             treasure_yx = find_intersection_xy(guri_points[0], guri_points[1], map_array.shape[0])
             print("*** intersection from last 2 cracks yx", treasure_yx)
             print("walking ")
-            go_to_treasure(api, treasure_yx, states)
+            go_to_treasure(api, treasure_yx)
             guri_points = []
     else:
         # print('RECV', packet)
         pass
 
 
-def go_to_treasure(api: phoenix.Api, treasure_point_yx, states: WalkStates):
+def go_to_treasure(api: phoenix.Api, treasure_point_yx):
     cur_y, cur_x, map_id = fetch_current_y_x_map_id(api)
     map_array = image_to_binary_array(map_id)
     print('go_to_treasure at', treasure_point_yx)
-    walk_to(api, map_array, treasure_point_yx, states)
+    walk_to(api, map_array, treasure_point_yx)
 
 
 if __name__ == "__main__":
@@ -90,7 +90,6 @@ if __name__ == "__main__":
 
     # port = input("enter port: ")
     api = phoenix.Api(int(port[0]))
-    walk_states = WalkStates()
 
     print('starting api')
 
@@ -105,7 +104,7 @@ if __name__ == "__main__":
                 # handle_send(json_msg["packet"])
                 pass
             elif json_msg["type"] == phoenix.Type.packet_recv.value:
-                handle_recv(api, json_msg["packet"], walk_states)
+                handle_recv(api, json_msg["packet"])
                 pass
             else:
                 # unhandled msg type
