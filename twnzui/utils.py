@@ -1,10 +1,11 @@
 import win32gui
 import win32con
 import win32api
+import ctypes
 import numpy as np
 
 
-def mark_window_area(arr, rect, value=True):
+def mark_window_area(arr, rect, value):
     left, top, right, bottom = rect
     top = max(0, top)
     left = max(0, left)
@@ -13,6 +14,23 @@ def mark_window_area(arr, rect, value=True):
 
     if top < bottom and left < right:
         arr[top:bottom, left:right] = value
+
+
+def get_windows():
+    '''Returns windows in z-order (top first)'''
+    user32 = ctypes.windll.user32
+    lst = []
+    top = user32.GetTopWindow(None)
+    if not top:
+        return lst
+    lst.append(top)
+    while True:
+        next = user32.GetWindow(lst[-1], win32con.GW_HWNDNEXT)
+        if not next:
+            break
+        lst.append(next)
+    lst = [ wh for wh in lst if win32gui.IsWindowVisible(wh) and not win32gui.IsIconic(wh) ]
+    return lst
 
 
 def is_window_partially_visible(window_title):
@@ -24,30 +42,37 @@ def is_window_partially_visible(window_title):
     target_window_handle = win32gui.FindWindow(None, window_title)
 
     if not target_window_handle:
+        print('window not found')
         return False  # Window not found
 
     target_rect = win32gui.GetWindowRect(target_window_handle)
-    mark_window_area(screen_array, target_rect)
+    mark_window_area(screen_array, target_rect, True)
 
-    all_win_handles = []
-
-    def enum_windows_callback(window_handle, _):
-        all_win_handles.append(window_handle)
-
-    win32gui.EnumWindows(enum_windows_callback, None)
-
+    all_win_handles = get_windows()
     for w in all_win_handles:
+        if not np.any(screen_array):
+            break
         if w != target_window_handle:
-            window_rect = win32gui.GetWindowRect(w)
+            try:
+                window_rect = win32gui.GetWindowRect(w)
+            except Exception:
+                print('invalid window handle found')
+                continue
             mark_window_area(screen_array, window_rect, False)
+            # print(win32gui.GetWindowText(w))
+            # print(window_rect)
+            # print(np.any(screen_array))
         else:
+            # print(win32gui.GetWindowText(w))
+            # print(window_rect)
+            # print(np.any(screen_array))
             break
 
     return np.any(screen_array)
 
 
 if __name__ == '__main__':
-    window_title = "NosTale"
+    window_title = "NosTale - (22628)"
     if is_window_partially_visible(window_title):
         print("The window is at least partially visible.")
     else:
