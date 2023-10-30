@@ -1,7 +1,7 @@
 import time
 
 from twnzlib import fetch, cal_distance
-from twnzlib.models import MapEntity
+from twnzlib.models import MapEntity, PlayerEntity
 
 
 def find_closest_monster_autoload(api, vnum_whitelist=None, vnum_blacklist=None):
@@ -10,16 +10,20 @@ def find_closest_monster_autoload(api, vnum_whitelist=None, vnum_blacklist=None)
     if vnum_whitelist is None:
         vnum_whitelist = []
     map_entity: MapEntity = fetch.fetch_map_entities(api)
+    player_info: PlayerEntity = fetch.fetch_player_info(api)
     print(map_entity)
-    return find_closest_monster(map_entity, vnum_whitelist, vnum_blacklist)
+    return find_closest_monster(map_entity, player_info, vnum_whitelist, vnum_blacklist)
 
 
-def find_closest_monster(map_entity: MapEntity, vnum_whitelist=None, vnum_blacklist=None):
+def find_closest_monster(map_entity: MapEntity, player_info: PlayerEntity, vnum_whitelist=None, vnum_blacklist=None):
     if vnum_blacklist is None:
         vnum_blacklist = []
     if vnum_whitelist is None:
         vnum_whitelist = []
-    player_info = map_entity.players[0]
+
+    
+    player_info_y = player_info['y']
+    player_info_x = player_info['x']
     monsters = map_entity.monsters[::]
     if len(monsters) == 0:
         return None
@@ -37,11 +41,11 @@ def find_closest_monster(map_entity: MapEntity, vnum_whitelist=None, vnum_blackl
     else:
         raise Exception("unexpected case found")
 
-    monsters.sort(key=lambda m: cal_distance((m.y, m.x), (player_info.y, player_info.x)))
+    monsters.sort(key=lambda m: cal_distance((m.y, m.x), (player_info_y, player_info_x)))
     return monsters[0]
 
 
-def attack_closest_monster_till_it_dies(api, settings_path: str = "D:\\SteamLibrary\\steamapps\\common\\NosTale\\default.ini"):
+def attack_closest_monster_till_it_dies(api, settings_path: str = "D:\\InstantCombat\\basicatk.ini"):
     #settings_path = os.path.join('D:', '\\SteamLibrary', 'steamapps', 'common', 'NosTale', 'default.ini')
     api.load_settings(settings_path)
     target_monster = find_closest_monster_autoload(api)
