@@ -236,3 +236,4 @@ sandbox*
 /src/cred.pickle
 /dist-archive/
 /temp
+*eieitemp.png

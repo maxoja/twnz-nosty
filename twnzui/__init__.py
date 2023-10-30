@@ -1,3 +1,4 @@
+from . import windows
 from .port_selector import PortSelectionGUI
 from .login_form import LoginApplication, K_RESULT
 from . import frame
