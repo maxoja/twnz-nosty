@@ -13,6 +13,7 @@ TEMP_PNG = "eieitemp.png"
 
 NAME = "name"
 LEVEL = "level"
+DELAY = 0.01
 
 
 def temp_img_to_text(prefix: str, i: int):
@@ -61,7 +62,9 @@ def __capture_and_crop_window(window, left, top, width, height):
 def __show_win_with_small_delay(window):
     win32gui.ShowWindow(window.getHandle(), win32con.SW_RESTORE)
     win32gui.SetForegroundWindow(window.getHandle())
-    time.sleep(0.01)
+    while not win32gui.IsWindowVisible(window.getHandle()):
+        pass
+    time.sleep(DELAY)
 
 
 def __get_game_windows():
@@ -78,7 +81,7 @@ def get_game_windows_with_level_n_name():
 
     result = []
     for i, w in enumerate(game_wins):
-        result.append((w, int(temp_img_to_text("name", i)), temp_img_to_text("player", i)))
+        result.append((w, temp_img_to_text(NAME, i), int(temp_img_to_text(LEVEL, i))))
     for t in result:
         print(t)
     return result
