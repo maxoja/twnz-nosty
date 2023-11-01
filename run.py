@@ -2,6 +2,8 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
+import root_config
+from root_config import PB_URL
 from pocketbase import PocketBase
 
 import twnzlib.config
@@ -9,6 +11,7 @@ from twnzlib import *
 from medals import *
 import twnzui as ui
 from twnzui import PortSelectionGUI
+from twnzui.login_form import LoginResult
 
 guri_points = []
 
@@ -50,22 +53,20 @@ def go_to_treasure(api: phoenix.Api, treasure_point_yx):
     walk_to(api, map_array, treasure_point_yx)
 
 
-if __name__ == "__main__":
-    login_out = {
-        ui.K_RESULT: False
-    }
-
-    pb = PocketBase("https://pb-twnz-nosty.hop.sh/")
-    # ui.LoginApplication(pb, login_out).run_mainloop()
-
-    app = QApplication(sys.argv)
-    login_app = ui.LoginApplication(pb, login_out)
-    login_app.show()
+def run_login_block_and_exit_if_failed(app: QApplication) -> LoginResult:
+    out = LoginResult()
+    pb = PocketBase(root_config.PB_URL)
+    login_ui = ui.LoginApplication(pb, out)
+    login_ui.show()
     app.exec_()
     app.exit(0)
-
-    if not login_out[ui.K_RESULT]:
+    if not out.success:
         exit(0)
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    login_result = run_login_block_and_exit_if_failed(app)
 
     ports = returnAllPorts()
     port = []

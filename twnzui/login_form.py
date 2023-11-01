@@ -11,10 +11,15 @@ from twnzui.banner import Hammy
 from twnzui.frame import NostyFrame
 
 
+class LoginResult:
+    def __init__(self):
+        self.success = False
+
+
 class LoginApplication(NostyFrame):
-    def __init__(self, pb_client: PocketBase, out_result: dict):
+    def __init__(self, pb_client: PocketBase, out: LoginResult):
         self.pb_client = pb_client
-        self.out_result = out_result
+        self.out = out
         super().__init__("Nosty Bot - Login", 120)
 
     def create_elems(self):
@@ -87,7 +92,7 @@ class LoginApplication(NostyFrame):
         credits_left = flows.get_credits(self.pb_client)
         if credits_left > 0:
             msg = (f"You logged in with {credits_left} credits left.\nBot program is starting.")
-            self.out_result[K_RESULT] = True
+            self.out.success = True
             self.show_info("Login Success", msg)
 
             if remember:
