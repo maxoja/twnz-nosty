@@ -22,6 +22,10 @@ class LoginApplication(NostyFrame):
         self.out = out
         super().__init__("Nosty Bot - Login", 120)
 
+    def auto_login_if_possible(self):
+        if len(self.email_entry.text()) > -1 and len(self.password_entry.text()) > 0:
+            self.perform_login()
+
     def create_elems(self):
         # Add an icon QLabel to display the icon image
         self.icon_label = Hammy(self.central_widget)
@@ -100,6 +104,7 @@ class LoginApplication(NostyFrame):
             else:
                 resource.save_cred('', '', False)
 
+            print('closing app')
             self.close()
             # TODO: start the bot, show credits
         else:

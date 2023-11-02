@@ -2,30 +2,40 @@ import time
 import requests
 import json
 
-import pywinctl as pwc
 import pyautogui
 import win32gui
 import win32con
 
-TEMP_PNG = "eieitemp.png"
+from twnzlib import get_game_windows
+from twnzlib.const import GAME_TITLE_POSTFIX, GAME_TITLE_PREFIX, PHOENIX_TITLE_INFIX
 
+TEMP_PNG = "eieitemp.png"
 
 
 NAME = "name"
 LEVEL = "level"
-DELAY = 0.01
+DELAY = 0.02
 
 
-def temp_img_to_text(prefix: str, i: int):
-    url = "https://tesseract-server.hop.sh/tesseract"
-    psm = 8 if prefix == LEVEL else 3
+def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop.sh/tesseract"):
+    # psm = 8 if prefix == LEVEL else 3
+    # dpi = 120 if prefix == LEVEL else 70
     fname = f'{prefix}-{i}-{TEMP_PNG}'
+    # print("OCR =", fname, psm)
     files = {
         'file': (fname, open(fname, 'rb')),
     }
-    data = {
-        'options': '{"languages":["eng"], "dpi":120, "pageSegmentationMethod": ' + str(psm) + '}'
-    }
+
+    if prefix == LEVEL:
+        data = {
+            'options': '{"languages":["eng"], "dpi": 120, "pageSegmentationMethod": 8, "ocrEngineMode": 3, "configParams": {"classify_enable_learning": "0", "tessedit_char_whitelist": "012345789+()"}}'
+        }
+    else:
+        print("NAME")
+        # Assume Name
+        data = {
+            'options': '{"languages":["eng"], "dpi": 119, "pageSegmentationMethod": 8, "ocrEngineMode": 0, "configParams": {"classify_enable_learning": "0", "classify_enable_adaptive_matcher": "0"}}'
+        }
 
     response = requests.post(url, files=files, data=data)
     print(response.text)
@@ -67,12 +77,8 @@ def __show_win_with_small_delay(window):
     time.sleep(DELAY)
 
 
-def __get_game_windows():
-    return [ w for w in pwc.getAllWindows() if "NosTale - (" in w.title ]
-
-
-def get_game_windows_with_level_n_name():
-    game_wins = __get_game_windows()
+def get_game_windows_with_name_level_port():
+    game_wins = get_game_windows()
 
     for i, w in enumerate(game_wins):
         __show_win_with_small_delay(w)
@@ -81,7 +87,10 @@ def get_game_windows_with_level_n_name():
 
     result = []
     for i, w in enumerate(game_wins):
-        result.append((w, temp_img_to_text(NAME, i), int(temp_img_to_text(LEVEL, i))))
+        port_title = w.title
+        port_title = port_title.replace(GAME_TITLE_PREFIX, "")
+        port_title = port_title.replace(GAME_TITLE_POSTFIX, "")
+        result.append((w, temp_img_to_text(NAME, i), int(temp_img_to_text(LEVEL, i)), int(port_title)))
     for t in result:
         print(t)
     return result

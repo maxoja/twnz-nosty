@@ -1,17 +1,23 @@
 import sys
 
+import win32gui
 from PyQt5.QtWidgets import QApplication
+from pywinctl._pywinctl_win import Win32Window
 
 import root_config
+import twnzui.windows
 from root_config import PB_URL
 from pocketbase import PocketBase
 
 import twnzlib.config
+from twnzbot.instances import NostyBotInstance
 from twnzlib import *
 from medals import *
 import twnzui as ui
-from twnzui import PortSelectionGUI
+from twnzui.instances import NosTaleWinInstance, BotWinInstance
 from twnzui.login_form import LoginResult
+
+from twnzui.sticky import SmallWindow
 
 guri_points = []
 
@@ -19,41 +25,9 @@ def handle_send(packet: str):
     print("[SEND]: " + packet)
 
 
-def handle_recv(api: phoenix.Api, packet: str):
-    global guri_points
-    head = packet.split()[0]
-
-    if head == 'hidn':
-        print("[RECV]: " + packet)
-
-        _, deg, x, y = eval("(" + ",".join(packet.split()[1:]) + ")")
-        guri_points.append((y, x, deg))
-        print("*** hidn received, saving a marker yx", guri_points[-1])
-        print(guri_points)
-
-        if len(guri_points) > 2:
-            guri_points = guri_points[1:]
-        if len(guri_points) >= 2:
-            cur_y, cur_x, map_id = fetch_current_y_x_map_id(api)
-            map_array = image_to_binary_array(map_id)
-            treasure_yx = find_intersection_xy(guri_points[0], guri_points[1], map_array.shape[0])
-            print("*** intersection from last 2 cracks yx", treasure_yx)
-            print("walking ")
-            go_to_treasure(api, treasure_yx)
-            guri_points = []
-    else:
-        # print('RECV', packet)
-        pass
 
 
-def go_to_treasure(api: phoenix.Api, treasure_point_yx):
-    cur_y, cur_x, map_id = fetch_current_y_x_map_id(api)
-    map_array = image_to_binary_array(map_id)
-    print('go_to_treasure at', treasure_point_yx)
-    walk_to(api, map_array, treasure_point_yx)
-
-
-def run_login_block_and_exit_if_failed(app: QApplication) -> LoginResult:
+def run_login_block_and_exit_if_failed(app: QApplication):
     out = LoginResult()
     pb = PocketBase(root_config.PB_URL)
     login_ui = ui.LoginApplication(pb, out)
@@ -64,52 +38,54 @@ def run_login_block_and_exit_if_failed(app: QApplication) -> LoginResult:
         exit(0)
 
 
+def create_nosty_instances():
+    phoenix_wins = BotWinInstance.get_all()
+    nostale_win_name_lv_ports = twnzui.windows.get_game_windows_with_name_level_port()
+
+    pairs = []
+    for p in phoenix_wins:
+        p_name = p.get_player_name()
+        p_lv = p.get_player_level()
+
+        def sorting(nost_tuple):
+            n_name = nost_tuple[1]
+            n_lv = nost_tuple[2]
+            return string_dist(n_name, p_name) + (1 if n_lv != p_lv else 0)
+
+        sorted_win = sorted(nostale_win_name_lv_ports, key=sorting, reverse=True)
+        pairs.append((p, NosTaleWinInstance(sorted_win.pop()[0].getHandle())))
+
+    result = []
+    for p in pairs:
+        phoenix_ins, nostale_ins = p
+        player_name = phoenix_ins.get_player_name()
+        control_win = SmallWindow(player_name, player_name=player_name)
+        api = phoenix.Api(phoenix_ins.get_port())
+        result.append(NostyBotInstance(control_win, nostale_ins, phoenix_ins, api))
+
+    return result
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    login_result = run_login_block_and_exit_if_failed(app)
+    run_login_block_and_exit_if_failed(app)
 
-    ports = returnAllPorts()
-    port = []
+    nosties = create_nosty_instances()
 
-    if len(ports) == 1:
-        port = [int(ports[0][1])]
-    else:
-        port = []
-
-    if not port:
-        port_selection_app = PortSelectionGUI(ports, port)
-        port_selection_app.show()
-        print('exec')
+    while len(nosties) == 0:
+        box = twnzui.misc.MessageBox("Cannot find any of Phoenix Bot instances.\nMake sure Phoenix Bot is opened before running Nosty Bot")
+        box.show()
         app.exec_()
-        print('exiting')
         app.exit(0)
-        print('exited')
+        nosties = create_nosty_instances()
 
-    if not port:
-        print('no port selected after port gui')
-        exit(1)
+    for n in nosties:
+        n.ctrl_win.show()
 
-    # port = input("enter port: ")
-    api = phoenix.Api(int(port[0]))
+    while True:
+        for n in nosties:
+            n.update()
+            n.bot_tick()
+        app.processEvents()
 
-    print('starting api')
-
-    while api.working():
-        occasional_log(api)
-
-        if not api.empty():
-            msg = api.get_message()
-            json_msg = json.loads(msg)
-
-            if json_msg["type"] == phoenix.Type.packet_send.value:
-                # handle_send(json_msg["packet"])
-                pass
-            elif json_msg["type"] == phoenix.Type.packet_recv.value:
-                handle_recv(api, json_msg["packet"])
-                pass
-            else:
-                # unhandled msg type
-                pass
-        else:
-            sleep(twnzlib.config.API_INTERVAL)
-    api.close()
+    sys.exit(app.exec_())

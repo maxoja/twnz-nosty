@@ -1,0 +1,3 @@
+GAME_TITLE_PREFIX = "NosTale - ("
+GAME_TITLE_POSTFIX = ")"
+PHOENIX_TITLE_INFIX = "] - Phoenix Bot:"

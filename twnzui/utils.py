@@ -33,13 +33,11 @@ def get_windows():
     return lst
 
 
-def is_window_partially_visible(window_title):
+def is_window_partially_visible(target_window_handle: int):
     screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
     screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
 
     screen_array = np.full((screen_height, screen_width), False, dtype=bool)
-
-    target_window_handle = win32gui.FindWindow(None, window_title)
 
     if not target_window_handle:
         print('window not found')
