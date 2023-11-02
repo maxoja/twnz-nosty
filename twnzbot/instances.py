@@ -14,6 +14,8 @@ def get_logic_for_mode(m: enums.Mode, api: phoenix.Api, states: NostyStates):
         return base.NostyEmptyLogic(api, states)
     elif m == enums.Mode.BROKEN_GURI:
         return more.NostyGuriLogic(api, states)
+    elif m == enums.Mode.EXPERIMENT:
+        return more.NostyExperimentLogic(api, states)
     else:
         raise Exception("Undefined map for mode " + m)
 
@@ -77,15 +79,7 @@ class NostyBotInstance:
 
         # SECTION: always on
         # do something here
+
         if not self.states.running:
             return
         self.logic.on_tick(json_msg)
-        # if json_msg["type"] == phoenix.Type.packet_send.value:
-            # handle_send(json_msg["packet"])
-            # pass
-        # elif json_msg["type"] == phoenix.Type.packet_recv.value:
-            # handle_recv(self.api, json_msg["packet"])
-            # pass
-        # else:
-            # unhandled msg type
-            # pass
