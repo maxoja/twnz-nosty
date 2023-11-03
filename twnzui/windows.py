@@ -31,8 +31,6 @@ def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop
             'options': '{"languages":["eng"], "dpi": 120, "pageSegmentationMethod": 8, "ocrEngineMode": 3, "configParams": {"classify_enable_learning": "0", "tessedit_char_whitelist": "012345789+()"}}'
         }
     else:
-        print("NAME")
-        # Assume Name
         data = {
             'options': '{"languages":["eng"], "dpi": 119, "pageSegmentationMethod": 8, "ocrEngineMode": 0, "configParams": {"classify_enable_learning": "0", "classify_enable_adaptive_matcher": "0"}}'
         }
@@ -85,24 +83,26 @@ def get_game_windows_with_name_level_port():
 
     for i, w in enumerate(game_wins):
         __show_win_with_small_delay(w)
-        crop_player_level_img_as_text(w, i)
-        crop_player_name_img_as_text(w, i)
+        crop_player_level_img(w, i)
+        crop_player_name_img(w, i)
 
     result = []
     for i, w in enumerate(game_wins):
         port_title = w.title
         port_title = port_title.replace(GAME_TITLE_PREFIX, "")
         port_title = port_title.replace(GAME_TITLE_POSTFIX, "")
-        result.append((w, temp_img_to_text(NAME, i), int(temp_img_to_text(LEVEL, i)), int(port_title)))
+        player_name = temp_img_to_text(NAME, i)
+        player_lvl = int(temp_img_to_text(LEVEL, i))
+        result.append((w, player_name, player_lvl, int(port_title)))
     for t in result:
         print(t)
     return result
 
 
-def crop_player_level_img_as_text(window, i:int):
+def crop_player_level_img(window, i:int):
     fname = f'{LEVEL}-{i}-{TEMP_PNG}'
     __capture_and_crop_window(window, left=80, top=30, width=30, height=20).save(fname)
 
-def crop_player_name_img_as_text(window, i:int):
+def crop_player_name_img(window, i:int):
     fname = f'{NAME}-{i}-{TEMP_PNG}'
     __capture_and_crop_window(window, left=110, top=30, width=137, height=20).save(fname)

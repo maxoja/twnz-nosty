@@ -1,18 +1,12 @@
 import sys
-
-import win32gui
 from PyQt5.QtWidgets import QApplication
-from pywinctl._pywinctl_win import Win32Window
 
 import root_config
 import twnzui.windows
-from root_config import PB_URL
 from pocketbase import PocketBase
 
-import twnzlib.config
 from twnzbot.instances import NostyBotInstance
 from twnzlib import *
-from medals import *
 import twnzui as ui
 from twnzui.instances import NosTaleWinInstance, BotWinInstance
 from twnzui.login_form import LoginResult
@@ -23,9 +17,6 @@ guri_points = []
 
 def handle_send(packet: str):
     print("[SEND]: " + packet)
-
-
-
 
 def run_login_block_and_exit_if_failed(app: QApplication):
     out = LoginResult()
