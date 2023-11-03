@@ -29,7 +29,7 @@ class LoginApplication(NostyFrame):
     def create_elems(self):
         # Add an icon QLabel to display the icon image
         self.icon_label = Hammy(self.central_widget)
-        pixmap = QPixmap('src/banner2.png')  # Load the icon image
+        pixmap = QPixmap('src\\banner2.png')  # Load the icon image
         pixmap = pixmap.scaled(192, 64, Qt.KeepAspectRatio)  # Scale the pixmap to the desired size
         self.icon_label.setPixmap(pixmap)
         self.icon_label.setAlignment(Qt.AlignCenter)  # Center both horizontally and vertically
