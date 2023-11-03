@@ -11,16 +11,25 @@ from twnzui.banner import Hammy
 from twnzui.frame import NostyFrame
 
 
+class LoginResult:
+    def __init__(self):
+        self.success = False
+
+
 class LoginApplication(NostyFrame):
-    def __init__(self, pb_client: PocketBase, out_result: dict):
+    def __init__(self, pb_client: PocketBase, out: LoginResult):
         self.pb_client = pb_client
-        self.out_result = out_result
+        self.out = out
         super().__init__("Nosty Bot - Login", 120)
+
+    def auto_login_if_possible(self):
+        if len(self.email_entry.text()) > -1 and len(self.password_entry.text()) > 0:
+            self.perform_login()
 
     def create_elems(self):
         # Add an icon QLabel to display the icon image
         self.icon_label = Hammy(self.central_widget)
-        pixmap = QPixmap('src/banner2.png')  # Load the icon image
+        pixmap = QPixmap('src\\banner2.png')  # Load the icon image
         pixmap = pixmap.scaled(192, 64, Qt.KeepAspectRatio)  # Scale the pixmap to the desired size
         self.icon_label.setPixmap(pixmap)
         self.icon_label.setAlignment(Qt.AlignCenter)  # Center both horizontally and vertically
@@ -87,7 +96,7 @@ class LoginApplication(NostyFrame):
         credits_left = flows.get_credits(self.pb_client)
         if credits_left > 0:
             msg = (f"You logged in with {credits_left} credits left.\nBot program is starting.")
-            self.out_result[K_RESULT] = True
+            self.out.success = True
             self.show_info("Login Success", msg)
 
             if remember:
@@ -95,6 +104,7 @@ class LoginApplication(NostyFrame):
             else:
                 resource.save_cred('', '', False)
 
+            print('closing app')
             self.close()
             # TODO: start the bot, show credits
         else:

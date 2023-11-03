@@ -28,6 +28,8 @@ def walk_to(api: phoenix.Api, map_array: np.ndarray, dest_yx: tuple):
     print('walk to', dest_yx)
     cur_y, cur_x, _ = fetch_current_y_x_map_id(api)
     dest_x, dest_y = dest_yx[::-1]
+    print('sending walk')
     api.player_walk(dest_x, dest_y)
+    print('finish sending walk')
     # path_points = find_walk_path_pruned(map_array, (cur_y, cur_x), dest_yx)
     # walk_along_path(api, path_points, states)
