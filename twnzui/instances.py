@@ -19,7 +19,13 @@ class BotWinInstance:
 
     def get_player_level(self):
         title = self.get_title()
-        return int(title.split(" ")[1])
+        return int(title.split(" ")[1].split("("))
+
+    def get_champ_level(self):
+        title = self.get_title()
+        if "(+" not in title:
+            return 0
+        return int(title.split("(+")[1].split(")")[0])
 
     def get_port(self):
         return int(self.get_title().split(":")[-1])

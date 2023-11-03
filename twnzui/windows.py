@@ -39,7 +39,10 @@ def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop
 
     response = requests.post(url, files=files, data=data)
     print(response.text)
-    return json.loads(response.text)['data']['stdout'].strip()
+    stdout = json.loads(response.text)['data']['stdout'].strip()
+    if prefix == NAME:
+        stdout = stdout.split("(")[0]
+    return stdout
 
 
 def __capture_and_crop_window(window, left, top, width, height):
