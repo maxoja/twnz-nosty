@@ -19,7 +19,7 @@ class BotWinInstance:
 
     def get_player_level(self):
         title = self.get_title()
-        return int(title.split(" ")[1].split("("))
+        return int(title.split(" ")[1].split("(")[0])
 
     def get_champ_level(self):
         title = self.get_title()
