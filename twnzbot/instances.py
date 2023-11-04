@@ -1,5 +1,7 @@
 import json
 
+import win32gui
+
 import twnzui
 from phoenixapi import phoenix
 from twnzbot import enums, base, more
@@ -58,6 +60,13 @@ class NostyBotInstance:
 
     def load_logic(self, mode:Mode):
         self.logic = get_logic_for_mode(mode, self.api, self.states)
+
+    def check_alive(self):
+        try: win32gui.GetWindowRect(self.game_win.window_handle)
+        except: return False
+        try: win32gui.GetWindowRect(self.bot_win.window_handle)
+        except: return False
+        return True
 
     def update(self):
         left, top, _, _ = self.game_win.get_rect()

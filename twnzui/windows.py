@@ -1,10 +1,13 @@
 import time
+from typing import List, Optional
+
 import requests
 import json
 
 import pyautogui
 import win32gui
 import win32con
+from pywinctl._pywinctl_win import Win32Window
 
 from twnzlib import get_game_windows
 from twnzlib.const import GAME_TITLE_POSTFIX, GAME_TITLE_PREFIX, PHOENIX_TITLE_INFIX
@@ -70,16 +73,20 @@ def __capture_and_crop_window(window, left, top, width, height):
         return None
 
 
-def __show_win_with_small_delay(window):
+def __show_win_with_small_delay(window:Win32Window):
     win32gui.ShowWindow(window.getHandle(), win32con.SW_RESTORE)
+    pyautogui.press('alt')
     win32gui.SetForegroundWindow(window.getHandle())
     while not win32gui.IsWindowVisible(window.getHandle()):
         pass
     time.sleep(DELAY)
 
 
-def get_game_windows_with_name_level_port():
+def get_game_windows_with_name_level_port(handle_blacklist: Optional[List[int]] = None):
     game_wins = get_game_windows()
+
+    if handle_blacklist is not None:
+        game_wins = [w for w in game_wins if w.getHandle() not in handle_blacklist]
 
     for i, w in enumerate(game_wins):
         __show_win_with_small_delay(w)
