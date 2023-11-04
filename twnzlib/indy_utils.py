@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pywinctl as pwc
 
@@ -38,3 +40,17 @@ def print_map(map_array: np.ndarray, replace_map: dict):
                 cell = replace_map[cell]
             print(str(cell) + ' ', end='')
         print()
+
+
+def cal_distance(yx1: tuple, yx2: tuple):
+    y1, x1 = yx1
+    y2, x2 = yx2
+
+    # Calculate the difference in y and x coordinates
+    delta_y = y2 - y1
+    delta_x = x2 - x1
+
+    # Calculate the Euclidean distance using the Pythagorean theorem
+    distance = math.sqrt(delta_y ** 2 + delta_x ** 2)
+
+    return distance
