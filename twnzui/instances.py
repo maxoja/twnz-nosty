@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 import win32gui
 
 from twnzlib import get_phoenix_windows
@@ -31,9 +33,10 @@ class BotWinInstance:
         return int(self.get_title().split(":")[-1])
 
     @staticmethod
-    def get_all():
+    def get_all(handle_blacklist: Optional[List[int]] = None):
         windows = get_phoenix_windows()
-        return [BotWinInstance(w.getHandle()) for w in windows]
+        handle_blacklist = [] if handle_blacklist is None else handle_blacklist
+        return [BotWinInstance(w.getHandle()) for w in windows if w.getHandle() not in handle_blacklist]
 
 
 class NosTaleWinInstance:

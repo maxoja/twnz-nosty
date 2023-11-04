@@ -1,4 +1,6 @@
 import sys
+from typing import List
+
 from PyQt5.QtWidgets import QApplication
 
 import root_config
@@ -13,10 +15,6 @@ from twnzui.login_form import LoginResult
 
 from twnzui.sticky import SmallWindow
 
-guri_points = []
-
-def handle_send(packet: str):
-    print("[SEND]: " + packet)
 
 def run_login_block_and_exit_if_failed(app: QApplication):
     out = LoginResult()
@@ -29,10 +27,25 @@ def run_login_block_and_exit_if_failed(app: QApplication):
         exit(0)
 
 
-def create_nosty_instances():
+def find_more_nosty_instances(current_nosties: List[NostyBotInstance]) -> List[NostyBotInstance]:
+    bot_win_handles = [n.bot_win.window_handle for n in current_nosties]
+    phoenix_wins = BotWinInstance.get_all(handle_blacklist=bot_win_handles)
+
+    if len(phoenix_wins) == 0:
+        return []
+
+    game_win_handles = [n.game_win.window_handle for n in current_nosties]
+    nostale_win_name_lv_ports = twnzui.windows.get_game_windows_with_name_level_port(handle_blacklist=game_win_handles)
+    return match_eiei(phoenix_wins, nostale_win_name_lv_ports)
+
+
+def create_nosty_instances() -> List[NostyBotInstance]:
     phoenix_wins = BotWinInstance.get_all()
     nostale_win_name_lv_ports = twnzui.windows.get_game_windows_with_name_level_port()
+    return match_eiei(phoenix_wins, nostale_win_name_lv_ports)
 
+
+def match_eiei(phoenix_wins, nostale_win_name_lv_ports):
     pairs = []
     for p in phoenix_wins:
         p_name = p.get_player_name()
@@ -57,26 +70,61 @@ def create_nosty_instances():
     return result
 
 
+def close_n_cleanup_instance(to_close: [NostyBotInstance], inst_list: List[NostyBotInstance]):
+    for n in to_close:
+        n.on_stop()
+        n.ctrl_win.hide()
+        n.api.close()
+        inst_list.remove(n)
+
+
+def keep_trying_if_empty(found_nosties: List[NostyBotInstance], prompt: bool=True):
+    while len(found_nosties) == 0:
+        if prompt:
+            box = twnzui.misc.MessageBox(
+                "Cannot find any of Phoenix Bot instances.\nMake sure Phoenix Bot is opened before running Nosty Bot")
+            box.show()
+            app.exec_()
+            app.exit(0)
+        else:
+            sleep(0.1)
+        found_nosties = create_nosty_instances()
+    return found_nosties
+
+
 if __name__ == "__main__":
+
     app = QApplication(sys.argv)
     run_login_block_and_exit_if_failed(app)
 
     nosties = create_nosty_instances()
-
-    while len(nosties) == 0:
-        box = twnzui.misc.MessageBox("Cannot find any of Phoenix Bot instances.\nMake sure Phoenix Bot is opened before running Nosty Bot")
-        box.show()
-        app.exec_()
-        app.exit(0)
-        nosties = create_nosty_instances()
+    nosties = keep_trying_if_empty(nosties)
 
     for n in nosties:
         n.ctrl_win.show()
 
     while True:
+        if len(nosties) == 0:
+            break
+
+        more_nosties = find_more_nosty_instances(nosties)
+        for n in more_nosties:
+            n.ctrl_win.show()
+        nosties = nosties + more_nosties
+
+        to_remove = []
+
+        # Standard processing and mark any dead instance
         for n in nosties:
+            if not n.check_alive():
+                to_remove.append(n)
+                continue
             n.update()
             n.bot_tick()
-        app.processEvents()
 
-    sys.exit(app.exec_())
+        # Close and cleanup dead instance
+        close_n_cleanup_instance(to_remove, nosties)
+        app.processEvents()
+    app.exit(0)
+    exit(0)
+    # sys.exit(app.exec_())
