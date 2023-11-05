@@ -48,15 +48,15 @@ class NostyGuriLogic(twnzbot.base.NostyEmptyLogic):
 
 class NostyQuickHandLogic(twnzbot.base.NostyEmptyLogic):
     DELAY_CHECK = 0
-    DELAY_ACT = 0.25
-    RANDOM_RANGE = 0.05
+    DELAY_ACT = 0.15
+    BUFFER_ACT = 0.05
     PICK_DIST = 2
 
     def get_mode(self):
         return Mode.ITEM_PICK_QUICK_HAND
 
     def get_next_act_time(self):
-        return time.time() + NostyQuickHandLogic.DELAY_ACT + random.random()*NostyQuickHandLogic.RANDOM_RANGE
+        return time.time() + NostyQuickHandLogic.DELAY_ACT + random.random()*NostyQuickHandLogic.BUFFER_ACT
 
     def on_start(self):
         self.next_act_allow = self.get_next_act_time()
@@ -94,6 +94,7 @@ class NostyQuickHandLogic(twnzbot.base.NostyEmptyLogic):
             if cal_distance((me_now['y'], me_now['x']), (self.next_item.y, self.next_item.x)) > NostyQuickHandLogic.PICK_DIST:
                 self.api.player_walk(self.next_item.x, self.next_item.y)
             else:
+                self.api.player_walk(me_now['x'], me_now['y'])
                 self.api.send_packet(f'get 1 {me_now["id"]} {self.next_item.id}')
             self.next_act_allow = self.get_next_act_time()
 
