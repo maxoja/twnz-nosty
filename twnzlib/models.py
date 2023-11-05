@@ -6,6 +6,12 @@ class MapEntity:
         self.players = [PlayerEntity(player) for player in map_entity.get('players', [])]
         self.type = map_entity.get('type', 0)
 
+    def find_item_with_id(self, id):
+        for i in self.items:
+            if i.id == id:
+                return i
+        return None
+
     def __str__(self):
         item_str = "\n".join([str(item) for item in self.items])
         monster_str = "\n".join([str(monster) for monster in self.monsters])
