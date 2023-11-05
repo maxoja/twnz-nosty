@@ -149,12 +149,15 @@ class NostyInstanceManager:
 
     def close_n_cleanup_instances(self, to_close: [NostyBotInstance]):
         # TODO remove dead pbot instance from pbot_checked_once, bc it's possible for window handle could get reused
-        for n in to_close:
+        for n in to_close[::]:
             n.on_stop()
             n.ctrl_win.hide()
             n.api.close()
             self.pbot_checked_once.remove(n.bot_win)
             self.instances.remove(n)
+
+    def close_all(self):
+        self.close_n_cleanup_instances(self.instances)
 
 
 def game_win_matchable(w: Win32Window):
@@ -268,11 +271,21 @@ if __name__ == "__main__":
 
     # run_login_block_and_exit_if_failed(app)
 
-    tray_thread = threading.Thread(target=lambda: NostyTray(lambda : exit(0)))
-    tray_thread.daemon = True
-    tray_thread.start()
     print('started tray thread')
     nim = NostyInstanceManager()
+
+    break_main_loop = False
+    def kill_them_all():
+        global break_main_loop
+        break_main_loop = True
+
+    def thread_func():
+        NostyTray(kill_them_all)
+
+    tray_thread = threading.Thread(target=thread_func)
+    tray_thread.daemon = True
+    tray_thread.start()
+
     nim.create_all()
     # keep_trying_if_empty_and_prompt_ok(nim)
 
@@ -280,6 +293,9 @@ if __name__ == "__main__":
         n.ctrl_win.show()
 
     while True:
+        if break_main_loop:
+            print('breaking main loop')
+            break
         if len(nim.instances) == 0:
             sleep(1)
 
@@ -307,6 +323,7 @@ if __name__ == "__main__":
 
         nim.close_n_cleanup_instances(to_remove)
         app.processEvents()
+    nim.close_all()
     app.exit(0)
     exit(0)
     # sys.exit(app.exec_())
