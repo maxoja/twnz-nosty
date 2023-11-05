@@ -3,6 +3,7 @@ from strenum import StrEnum
 
 class Mode(StrEnum):
     NONE = auto()
+    PHOENIX = auto()
     BROKEN_GURI = auto()
     PICK_ITEMS_ONESHOT = auto()
     PICK_ITEMS_FOREVER = auto()

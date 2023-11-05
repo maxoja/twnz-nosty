@@ -6,7 +6,7 @@ from typing import List, Set, Optional, Tuple
 import threading
 
 import psutil
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QAction
 from pygetwindow import Win32Window
 
 import root_config
@@ -20,6 +20,7 @@ from twnzui.instances import NosTaleWinInstance, BotWinInstance
 from twnzui.login_form import LoginResult
 from twnzui.tray import NostyTray
 from twnzui.windows import Locator
+from twnzui.windows import show_win_with_small_delay
 
 
 def run_login_block_and_exit_if_failed(app: QApplication):
@@ -297,12 +298,23 @@ if __name__ == "__main__":
 
         to_remove = []
 
+        party_select_actions = []
+        cb_map = dict()
+
+        def wrap_select_player_cb(nosty: NostyBotInstance):
+            return lambda: show_win_with_small_delay(get_window_of_handle(nosty.game_win.window_handle))
+
+        for n in nim.instances:
+            qact = QAction(n.bot_win.get_player_name(), n.ctrl_win, checkable=False)
+            qact.triggered.connect(wrap_select_player_cb(n))
+            party_select_actions.append(qact)
+
         # Standard processing and mark any dead instance
         for n in nim.instances:
             if not n.check_alive():
                 to_remove.append(n)
                 continue
-            n.update()
+            n.update(party_select_actions)
             n.tick_entry()
             if n.should_be_removed:
                 to_remove.append(n)

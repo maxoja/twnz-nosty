@@ -2,6 +2,7 @@ import time
 from enum import Enum, auto
 from typing import List, Optional, Tuple, Any
 
+import pywinctl
 import requests
 import json
 
@@ -20,7 +21,6 @@ TEMP_PNG = "eieitemp.png"
 NAME = "name"
 LEVEL = "level"
 DELAY = 0.02
-
 
 def show_win_with_small_delay(window:Win32Window):
     win32gui.ShowWindow(window.getHandle(), win32con.SW_RESTORE)

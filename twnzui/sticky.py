@@ -1,4 +1,5 @@
 import sys
+from typing import List
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor
@@ -8,6 +9,8 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QMessageBox, QAppl
 import twnzbot
 import twnzui
 import pywinctl as pwc
+
+from twnzbot.models import NostyStates
 
 
 class SmallWindow(QMainWindow):
@@ -47,12 +50,18 @@ class SmallWindow(QMainWindow):
 
         # Create a QMenu for the dropdown options
         self.menu = QMenu()
-        for i, mode in enumerate(twnzbot.enums.Mode):
+        self.main_actions = []
+        for mode in twnzbot.enums.Mode:
+            if mode != twnzbot.enums.Mode.PHOENIX:
+                # intentional for first free version
+                continue
             option_action = QAction(mode, self, checkable=True)
             option_action.triggered.connect(self.on_mode_selected)
-            if i == 0:
+            if mode == NostyStates.INITIAL_MODE:
                 option_action.setChecked(True)
+            self.main_actions.append(option_action)
             self.menu.addAction(option_action)
+        self.party_selector_actions = []
         self.more_button.setMenu(self.menu)
 
         # Construct Layout
@@ -75,13 +84,17 @@ class SmallWindow(QMainWindow):
         action = self.sender()
         mode = action.text()
 
-        for menu_action in self.menu.actions():
-            if menu_action != action:
-                menu_action.setChecked(False)
-        action.setChecked(True)
+        if action in self.main_actions:
+            for menu_action in self.menu.actions():
+                if menu_action != action:
+                    menu_action.setChecked(False)
+            action.setChecked(True)
 
-        if self.mode_cb is not None:
-            self.mode_cb(twnzbot.enums.Mode(mode))
+            if self.mode_cb is not None:
+                self.mode_cb(twnzbot.enums.Mode(mode))
+        else:
+            # show another game client
+            pass
 
     def on_start_clicked(self, no_trigger=False):
         self.start = not self.start
@@ -102,6 +115,14 @@ class SmallWindow(QMainWindow):
             ss = 'background: red; color: white; padding-bottom:3px;'
         self.start_button.setText(t)
         self.start_button.setStyleSheet(ss)
+
+    def set_party_selector(self, new_selector_actions: List[QAction]):
+        for a in self.party_selector_actions:
+            self.menu.removeAction(a)
+        self.party_selector_actions = new_selector_actions[::]
+        for a in self.party_selector_actions:
+            self.menu.addAction(a)
+
 
 
     def show_popup(self):
