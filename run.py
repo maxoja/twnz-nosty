@@ -201,6 +201,16 @@ def find_best_pbot_win_for_game_win(game_win: Win32Window, pbots: List[BotWinIns
     pbots.sort(key=distance_pbot_game_info_wrap_nost_tuple(game_win_info), reverse=True)
     return pbots[0]
 
+def match_v3(phoenix_wins: List[BotWinInstance]) -> List[NostyBotInstance]:
+    if len(phoenix_wins) == 0:
+        return []
+    result = []
+    for p in phoenix_wins:
+        game_pid = get_game_pid_from_bot_port(p.get_port())
+        game_win = get_win_of_pid(game_pid)
+        game_ins = NosTaleWinInstance(game_win.getHandler())
+        result.append(NostyBotInstance(game_ins, p))
+    return result
 
 def match_phoenix_n_nostale_wins(phoenix_wins: List[BotWinInstance], game_wins: List[Win32Window]) -> List[NostyBotInstance]:
     if len(phoenix_wins) == 0:

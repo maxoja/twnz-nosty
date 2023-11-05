@@ -1,10 +1,25 @@
 import math
+from typing import Optional, Any
 
 import numpy as np
+import psutil
 import pywinctl as pwc
+import win32process
 
 from twnzlib.const import GAME_TITLE_PREFIX, PHOENIX_TITLE_INFIX
 
+def get_game_pid_from_bot_port(bot_port: int):
+    for conn in psutil.net_connections(kind='tcp'):
+        if conn.laddr.port == bot_port:
+            return conn.pid
+
+def get_win_of_pid(looking_pid: int) -> Optional[Any]:
+    all_win = pwc.getAllWindows()
+    for w in all_win:
+        threadid, pid = win32process.GetWindowThreadProcessId(w.getHandle())
+        if pid == looking_pid:
+            return w
+    return None
 
 def get_all_handles():
     all_wins = pwc.getAllWindows()

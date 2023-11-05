@@ -29,7 +29,7 @@ class BotWinInstance:
             return 0
         return int(title.split("(+")[1].split(")")[0])
 
-    def get_port(self):
+    def get_port(self) -> int:
         return int(self.get_title().split(":")[-1])
 
     @staticmethod
