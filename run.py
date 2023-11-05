@@ -3,6 +3,7 @@ import os
 import signal
 import sys
 from typing import List, Set, Optional, Tuple
+import threading
 
 import psutil
 from PyQt5.QtWidgets import QApplication
@@ -17,6 +18,7 @@ from twnzlib import *
 import twnzui as ui
 from twnzui.instances import NosTaleWinInstance, BotWinInstance
 from twnzui.login_form import LoginResult
+from twnzui.tray import NostyTray
 from twnzui.windows import Locator
 
 
@@ -266,6 +268,10 @@ if __name__ == "__main__":
 
     # run_login_block_and_exit_if_failed(app)
 
+    tray_thread = threading.Thread(target=lambda: NostyTray(lambda : exit(0)))
+    tray_thread.daemon = True
+    tray_thread.start()
+    print('started tray thread')
     nim = NostyInstanceManager()
     nim.create_all()
     # keep_trying_if_empty_and_prompt_ok(nim)
