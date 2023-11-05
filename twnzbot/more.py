@@ -1,6 +1,6 @@
 import random
 import time
-from typing import Optional
+from typing import Optional, List
 
 import twnzbot.base
 from phoenixapi import phoenix
@@ -53,19 +53,20 @@ class NostyQuickHandLogic(twnzbot.base.NostyEmptyLogic):
     PICK_DIST = 2
 
     def get_mode(self):
-        return Mode.ITEM_PICK_QUICK_HAND
+        return Mode.PICK_ITEMS_ONESHOT
 
     def get_next_act_time(self):
         return time.time() + NostyQuickHandLogic.DELAY_ACT + random.random()*NostyQuickHandLogic.BUFFER_ACT
 
     def on_start(self):
+        print('on_start')
         self.next_act_allow = self.get_next_act_time()
         self.next_check_allow = time.time()
         self.radius = 10
         self.me = fetch_player_info(self.api)
         self.me_yx = (self.me['y'], self.me['x'])
         self.map_ent = fetch_map_entities(self.api)
-        self.target_items = [i for i in self.map_ent.items if cal_distance(self.me_yx, (i.y, i.x)) <= self.radius]
+        self.target_items = [i for i in self.map_ent.items if cal_distance(self.me_yx, (i.y, i.x)) <= self.radius and i.id != -1 and (i.owner_id in [0,-1] or i.owner_id == self.me['id'])]
         self.next_item = self.__get_next_item()
         self.act_queue = []
 
@@ -83,23 +84,104 @@ class NostyQuickHandLogic(twnzbot.base.NostyEmptyLogic):
         if self.next_item is None:
             if self.ctrl_win.start:
                 self.ctrl_win.start_button.click()
-            # no more items to work on
             return
+
         if len(self.act_queue) > 0:
             # is busy
             return
 
         if time.time() >= self.next_act_allow:
             me_now = fetch_player_info(self.api)
-            if cal_distance((me_now['y'], me_now['x']), (self.next_item.y, self.next_item.x)) > NostyQuickHandLogic.PICK_DIST:
+            dist = cal_distance((me_now['y'], me_now['x']), (self.next_item.y, self.next_item.x))
+            dist_str = f'{dist:2f}'
+            if dist > NostyQuickHandLogic.PICK_DIST:
+                print(self.next_item.id, 'walk to item', dist_str)
                 self.api.player_walk(self.next_item.x, self.next_item.y)
             else:
+                print(self.next_item.id, 'picking item', dist_str)
                 self.api.send_packet(f'get 1 {me_now["id"]} {self.next_item.id}')
             self.next_act_allow = self.get_next_act_time()
 
     def on_all_tick(self, json_msg: dict):
         if self.next_item is None:
             return
+        if time.time() >= self.next_check_allow:
+            self.__check()
+            self.next_check_allow = time.time() + NostyQuickHandLogic.DELAY_CHECK
+
+
+class NostyQuickHandForeverLogic(NostyQuickHandLogic):
+    # TODO 30 second cool down for picked item ignore
+    def get_mode(self):
+        return Mode.PICK_ITEMS_FOREVER
+
+    def on_start(self):
+        print('on_start forever')
+        self.next_act_allow = self.get_next_act_time()
+        self.next_check_allow = time.time()
+        self.radius = 1000
+        self.act_queue = []
+        self.next_item = None
+        self.picked_items: List[ItemEntity] = []
+
+    def get_picked_ids(self):
+        return [i.id for i in self.picked_items]
+
+    def __get_next_item(self) -> Optional[ItemEntity]:
+        latest_map = fetch_map_entities(self.api)
+        me = fetch_player_info(self.api)
+        me_y, me_x = me['y'], me['x']
+        items_on_map = [ i for i in latest_map.items if i.id != -1 and (i.owner_id in [0,-1] or i.owner_id == me['id']) and i.id not in self.get_picked_ids()]
+        def s(item: ItemEntity):
+            return cal_distance((me_y, me_x), (item.y, item.x))
+        items_on_map.sort(key=s)
+        return items_on_map.pop(0) if len(items_on_map) > 0 else None
+
+    def __check(self):
+        if self.next_item is not None and self.next_item.id in self.get_picked_ids():
+            self.next_item = None
+        if self.next_item is None:
+            self.next_item = self.__get_next_item()
+        if self.next_item is None:
+            return
+
+
+        map_ent = fetch_map_entities(self.api)
+        if map_ent is None:
+            return
+
+        to_remove = []
+        for i in self.picked_items:
+            same_item = map_ent.find_item_with_id(i.id)
+            if same_item is None:
+                to_remove.append(i)
+                continue
+            if same_item.owner_id != i.owner_id:
+                to_remove.append(i)
+        for i in to_remove:
+            self.picked_items.remove(i)
+
+
+        if self.next_item.id in [i.id for i in map_ent.items]:
+            self.next_item = [i for i in map_ent.items if i.id == self.next_item.id][0]
+        else:
+            self.next_item = None
+            return
+
+        if time.time() >= self.next_act_allow:
+            me_now = fetch_player_info(self.api)
+            dist = cal_distance((me_now['y'], me_now['x']), (self.next_item.y, self.next_item.x))
+            dist_str = f'{dist:2f}'
+            if dist > NostyQuickHandLogic.PICK_DIST:
+                print(self.next_item.id, 'walk to item', dist_str)
+                self.api.player_walk(self.next_item.x+1, self.next_item.y+1)
+            else:
+                print(self.next_item.id, 'picking item', dist_str)
+                self.api.send_packet(f'get 1 {me_now["id"]} {self.next_item.id}')
+                self.picked_items.append(self.next_item)
+            self.next_act_allow = self.get_next_act_time()
+
+    def on_all_tick(self, json_msg: dict):
         if time.time() >= self.next_check_allow:
             self.__check()
             self.next_check_allow = time.time() + NostyQuickHandLogic.DELAY_CHECK

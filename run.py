@@ -75,7 +75,7 @@ class NostyInstanceManager:
 
     @staticmethod
     def unlock():
-        if locked:
+        if locked and os.path.exists(lock_file) and os.path.isfile(lock_file):
             os.remove(lock_file)
 
 
