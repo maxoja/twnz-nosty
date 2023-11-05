@@ -1,12 +1,15 @@
 import time
-from typing import List, Optional
+from enum import Enum, auto
+from typing import List, Optional, Tuple, Any
 
 import requests
 import json
 
 import pyautogui
+import win32api
 import win32gui
 import win32con
+from PIL import Image
 from pywinctl._pywinctl_win import Win32Window
 
 from twnzlib import get_game_windows
@@ -14,10 +17,55 @@ from twnzlib.const import GAME_TITLE_POSTFIX, GAME_TITLE_PREFIX, PHOENIX_TITLE_I
 
 TEMP_PNG = "eieitemp.png"
 
-
 NAME = "name"
 LEVEL = "level"
 DELAY = 0.02
+
+
+def show_win_with_small_delay(window:Win32Window):
+    win32gui.ShowWindow(window.getHandle(), win32con.SW_RESTORE)
+    pyautogui.press('alt')
+    win32gui.SetForegroundWindow(window.getHandle())
+    while not win32gui.IsWindowVisible(window.getHandle()):
+        pass
+    time.sleep(DELAY)
+
+
+HAYSTACK_PATH = 'haystacktemp.png'
+
+
+class Locator(Enum):
+    MAP_BUTTON = auto()
+    MP_LABEL = auto()
+    NOSTALE_TITLE = auto()
+
+    def get_img_path(self):
+        if self == Locator.MAP_BUTTON:
+            return 'src\\locator\\map_button.png'
+        if self == Locator.MP_LABEL:
+            return 'src\\locator\\mp_label.png'
+        if self == Locator.NOSTALE_TITLE:
+            return 'src\\locator\\nostale_title.png'
+        else:
+            raise Exception('undefined img path for enum ' + str(self.name))
+
+    def find_local_rect_on_window(self, win: Win32Window) -> Optional[Tuple[int, int, int, int]]:
+        show_win_with_small_delay(win)
+        l, t, r, b = win32gui.GetWindowRect(win.getHandle())
+        capture_and_crop_window(win, 0, 0, r-l, b-t).save(HAYSTACK_PATH)
+        try:
+            return pyautogui.locate(self.get_img_path(), HAYSTACK_PATH)
+        except pyautogui.ImageNotFoundException:
+            return None
+
+    def find_global_rect_on_window(self, win:Win32Window) -> Optional[Tuple[int, int, int ,int]]:
+        rect = self.find_local_rect_on_window(win)
+        if rect is None:
+            return None
+        ll, lt, lw, lh = rect
+        gl, gt, gw, gh = win32gui.GetWindowRect(win.getHandle())
+        rect = (ll+gl, lt+gt, lw+gw, lh+gh)
+        return rect
 
 
 def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop.sh/tesseract"):
@@ -45,26 +93,43 @@ def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop
         stdout = stdout.split("(")[0]
     return stdout
 
+def get_monitor_from_window(window_handle):
+    monitor_handle = win32api.MonitorFromWindow(window_handle, win32con.MONITOR_DEFAULTTONEAREST)
+    return monitor_handle
 
-def __capture_and_crop_window(window, left, top, width, height):
+def get_screen_dimensions_for_monitor(monitor_handle):
+    try:
+        # Get monitor info
+        monitor_info = win32api.GetMonitorInfo(monitor_handle)
+
+        # Calculate the screen width and height
+        screen_width = monitor_info['Monitor'][2] - monitor_info['Monitor'][0]
+        screen_height = monitor_info['Monitor'][3] - monitor_info['Monitor'][1]
+
+        return screen_width, screen_height
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+def capture_and_crop_window(window, lleft, ltop, lwidth, lheight) -> Optional[Any]:
     try:
         # Get the window's position and size
-        x, y, win_width, win_height = window.left, window.top, window.width, window.height
+        win_x, win_y, win_width, win_height = window.left, window.top, window.width, window.height
+        monitor_handle = get_monitor_from_window(window.getHandle())
+        swidth, sheight = get_screen_dimensions_for_monitor(monitor_handle)
 
-        # Calculate the cropping coordinates
-        crop_left = max(left, 0)
-        crop_top = max(top, 0)
-        crop_right = min(left + width, win_width)
-        crop_bottom = min(top + height, win_height)
+        # Capture the window content and crop it
+        gleft = max(0, win_x + lleft)
+        gright = min(win_x + lleft + lwidth, swidth)
+        gtop = max(0, win_y + ltop)
+        gbottom = min(win_y + ltop + lheight, sheight)
 
-        if crop_right <= crop_left or crop_bottom <= crop_top:
+        if gright <= gleft or gbottom <= gtop:
             print("Invalid cropping dimensions.")
             return None
 
-        # Capture the window content and crop it
         screenshot = pyautogui.screenshot(
-            region=(x + crop_left, y + crop_top, crop_right - crop_left, crop_bottom - crop_top))
-
+            region=(gleft, gtop, gright - gleft, gbottom - gtop))
 
         return screenshot
 
@@ -73,23 +138,9 @@ def __capture_and_crop_window(window, left, top, width, height):
         return None
 
 
-def __show_win_with_small_delay(window:Win32Window):
-    win32gui.ShowWindow(window.getHandle(), win32con.SW_RESTORE)
-    pyautogui.press('alt')
-    win32gui.SetForegroundWindow(window.getHandle())
-    while not win32gui.IsWindowVisible(window.getHandle()):
-        pass
-    time.sleep(DELAY)
-
-
-def get_game_windows_with_name_level_port(handle_blacklist: Optional[List[int]] = None):
-    game_wins = get_game_windows()
-
-    if handle_blacklist is not None:
-        game_wins = [w for w in game_wins if w.getHandle() not in handle_blacklist]
-
+def get_game_windows_with_name_level_port(game_wins: List[Win32Window]) -> List[Tuple[Win32Window, str, int, int]]:
     for i, w in enumerate(game_wins):
-        __show_win_with_small_delay(w)
+        show_win_with_small_delay(w)
         crop_player_level_img(w, i)
         crop_player_name_img(w, i)
 
@@ -108,8 +159,9 @@ def get_game_windows_with_name_level_port(handle_blacklist: Optional[List[int]] 
 
 def crop_player_level_img(window, i:int):
     fname = f'{LEVEL}-{i}-{TEMP_PNG}'
-    __capture_and_crop_window(window, left=80, top=30, width=30, height=20).save(fname)
+    capture_and_crop_window(window, lleft=80, ltop=30, lwidth=30, lheight=20).save(fname)
 
 def crop_player_name_img(window, i:int):
     fname = f'{NAME}-{i}-{TEMP_PNG}'
-    __capture_and_crop_window(window, left=110, top=30, width=137, height=20).save(fname)
+    capture_and_crop_window(window, lleft=110, ltop=30, lwidth=137, lheight=20).save(fname)
+

@@ -38,6 +38,10 @@ class BotWinInstance:
         handle_blacklist = [] if handle_blacklist is None else handle_blacklist
         return [BotWinInstance(w.getHandle()) for w in windows if w.getHandle() not in handle_blacklist]
 
+    def __eq__(self, other):
+        # assume other is of the same type
+        return self.window_handle == other.window_handle
+
 
 class NosTaleWinInstance:
     def __init__(self, wh: int):
@@ -67,3 +71,7 @@ class NosTaleWinInstance:
 
     def get_top(self):
         return self.get_left_top()[1]
+
+    def __eq__(self, other):
+        # assume other is of the same type
+        return self.window_handle == other.window_handle

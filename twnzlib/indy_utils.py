@@ -9,8 +9,10 @@ from twnzlib.const import GAME_TITLE_PREFIX, PHOENIX_TITLE_INFIX
 def get_phoenix_windows():
     return [ w for w in pwc.getAllWindows() if PHOENIX_TITLE_INFIX in w.title ]
 
-def get_game_windows():
-    return [ w for w in pwc.getAllWindows() if GAME_TITLE_PREFIX in w.title ]
+def get_game_windows(handle_blacklist=None):
+    if handle_blacklist is None:
+        handle_blacklist = []
+    return [ w for w in pwc.getAllWindows() if GAME_TITLE_PREFIX in w.title and w.getHandle() not in handle_blacklist]
 
 def string_dist(s1, s2):
     # also called levenshtein_distance
