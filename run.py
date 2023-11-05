@@ -1,3 +1,6 @@
+import atexit
+import os
+import signal
 import sys
 from typing import List, Set, Optional, Tuple
 
@@ -32,6 +35,23 @@ class NostyInstanceManager:
     def __init__(self):
         self.pbot_checked_once: Set[BotWinInstance] = set()
         self.instances: List[NostyBotInstance] = []
+
+    @staticmethod
+    def lock():
+        try:
+            global locked
+            file = open(lock_file, "x")
+            file.write(str(os.getpid()))
+            locked = True
+        except FileExistsError:
+            print("Another instance of the program is already running.")
+            sys.exit(1)
+
+    @staticmethod
+    def unlock():
+        if locked:
+            os.remove(lock_file)
+
 
     def create_all(self):
         # find all nostale wins if start first time
@@ -191,9 +211,35 @@ def keep_trying_if_empty_and_prompt_ok(nim: NostyInstanceManager, prompt: bool=T
         nim.create_all()
 
 
+lock_file = "my_program.lock"
+locked = False
+
+
+def signal_handler(signum, frame):
+    # Handle the signal (e.g., clean up resources)
+    NostyInstanceManager.unlock()
+    sys.exit(1)
+
+def exit_handler():
+    # Handle program exit (e.g., clean up resources)
+    NostyInstanceManager.unlock()
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    atexit.register(exit_handler)
 
     app = QApplication(sys.argv)
+
+    try:
+        NostyInstanceManager.lock()
+    except:
+        box = twnzui.misc.MessageBox("Nosty Bot is already running in the background")
+        box.show()
+        app.exec_()
+        app.exit(0)
+        exit(0)
+
     # run_login_block_and_exit_if_failed(app)
 
     nim = NostyInstanceManager()
