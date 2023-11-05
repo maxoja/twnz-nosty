@@ -97,7 +97,7 @@ class NostyInstanceManager:
         fg_game_ins = NosTaleWinInstance(foreground_game_win.getHandle())
         return NostyBotInstance(fg_game_ins, best_pbot_ins)
 
-    def close_n_cleanup_instance(self, to_close: [NostyBotInstance]):
+    def close_n_cleanup_instances(self, to_close: [NostyBotInstance]):
         # TODO remove dead pbot instance from pbot_checked_once, bc it's possible for window handle could get reused
         for n in to_close:
             n.on_stop()
@@ -105,24 +105,6 @@ class NostyInstanceManager:
             n.api.close()
             self.pbot_checked_once.remove(n.bot_win)
             self.instances.remove(n)
-
-
-def find_more_nosty_instances(current_nosties: List[NostyBotInstance]) -> List[NostyBotInstance]:
-    bot_win_handles = [n.bot_win.window_handle for n in current_nosties]
-    phoenix_wins = BotWinInstance.get_all(handle_blacklist=bot_win_handles)
-
-    if len(phoenix_wins) == 0:
-        return []
-
-    game_win_handles = [n.game_win.window_handle for n in current_nosties]
-    game_wins_filtered = get_game_windows(handle_blacklist=game_win_handles)
-    return match_phoenix_n_nostale_wins(phoenix_wins, game_wins_filtered)
-
-
-def create_nosty_instances() -> List[NostyBotInstance]:
-    phoenix_wins = BotWinInstance.get_all()
-    game_wins = get_game_windows()
-    return match_phoenix_n_nostale_wins(phoenix_wins, game_wins)
 
 
 def game_win_matchable(w: Win32Window):
@@ -229,9 +211,7 @@ if __name__ == "__main__":
             n.update()
             n.bot_tick()
 
-        # Close and cleanup dead instance
-        nim.close_n_cleanup_instance(to_remove)
-        # close_n_cleanup_instance(to_remove, nim.instances)
+        nim.close_n_cleanup_instances(to_remove)
         app.processEvents()
     app.exit(0)
     exit(0)
