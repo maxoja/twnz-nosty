@@ -31,6 +31,15 @@ def run_login_block_and_exit_if_failed(app: QApplication):
         exit(0)
 
 
+def process_active(pid: int or str) -> bool:
+    try:
+        process = psutil.Process(pid)
+    except psutil.Error as error:  # includes NoSuchProcess error
+        return False
+    if psutil.pid_exists(pid) and process.status() == psutil.STATUS_RUNNING:
+        return True
+
+
 class NostyInstanceManager:
     def __init__(self):
         self.pbot_checked_once: Set[BotWinInstance] = set()
@@ -44,6 +53,21 @@ class NostyInstanceManager:
             file.write(str(os.getpid()))
             locked = True
         except FileExistsError:
+            with open(lock_file, "r") as f:
+                content = f.read()
+                lock_pid = int(content)
+
+            if lock_pid == os.getpid():
+                print('redundant lock file, considered already correctly locked')
+                locked = True
+                return
+
+            if not process_active(lock_pid):
+                print('expired lock file, remove lock and relock')
+                os.remove(lock_file)
+                locked = False
+                NostyInstanceManager.lock()
+                return
             print("Another instance of the program is already running.")
             sys.exit(1)
 
