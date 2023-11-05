@@ -1,12 +1,13 @@
 from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QSizePolicy
 
+from twnzlib.const import BASE_NOSTY_TITLE
 from twnzui.frame import NostyFrame
 
 class PortSelectionGUI(NostyFrame):
     def __init__(self, ports: [tuple], out_port: list):
         self.ports = ports
         self.out_port = out_port
-        NostyFrame.__init__(self, "Nosty Bot - Select Client", 150)
+        NostyFrame.__init__(self, BASE_NOSTY_TITLE + " - Select Client", 150)
 
     def create_elems(self):
         self.button_labels = [' | '.join(p) for p in self.ports]

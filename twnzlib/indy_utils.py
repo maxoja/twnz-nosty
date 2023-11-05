@@ -6,6 +6,11 @@ import pywinctl as pwc
 from twnzlib.const import GAME_TITLE_PREFIX, PHOENIX_TITLE_INFIX
 
 
+def get_all_handles():
+    all_wins = pwc.getAllWindows()
+    handles = [w.getHandle() for w in all_wins]
+    return handles
+
 def get_phoenix_windows():
     return [ w for w in pwc.getAllWindows() if PHOENIX_TITLE_INFIX in w.title ]
 

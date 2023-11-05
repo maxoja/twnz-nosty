@@ -1,16 +1,17 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QMessageBox, QVBoxLayout
 from PyQt5.QtCore import Qt
 
+from twnzlib.const import BASE_NOSTY_TITLE
 from twnzui.const import *
 from twnzui.title_bar import CustomTitleBar
 
 
 class NostyFrame(QMainWindow):
-    def __init__(self, title_text: str = "Nosty Bot Login", label_width=80):
+    def __init__(self, title_text: str = (BASE_NOSTY_TITLE + " Login"), label_width=80):
         super().__init__()
         self.setWindowFlag(Qt.FramelessWindowHint)  # Make the window frameless
         self.setAttribute(Qt.WA_TranslucentBackground)  # Make the background transparent
-        self.setWindowTitle("Nosty Bot")
+        self.setWindowTitle(BASE_NOSTY_TITLE)
 
         self.wrap = QWidget(self)
         self.invisible_bar = CustomTitleBar(self.wrap, title_text, label_width)

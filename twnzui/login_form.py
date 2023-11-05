@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QLi
 from PyQt5.QtCore import Qt, QPoint
 
 from pocketbase import PocketBase  # Import PocketBase from your module
+
+from twnzlib.const import BASE_NOSTY_TITLE
 from twnzpb import flows
 from twnzlib import resource
 from twnzui.const import *
@@ -20,7 +22,7 @@ class LoginApplication(NostyFrame):
     def __init__(self, pb_client: PocketBase, out: LoginResult):
         self.pb_client = pb_client
         self.out = out
-        super().__init__("Nosty Bot - Login", 120)
+        super().__init__(BASE_NOSTY_TITLE + " - Login", 120)
 
     def auto_login_if_possible(self):
         if len(self.email_entry.text()) > -1 and len(self.password_entry.text()) > 0:

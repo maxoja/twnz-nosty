@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QSizePolicy, QLabel
 
+from twnzlib.const import BASE_NOSTY_TITLE
 from twnzui.frame import NostyFrame
 
 
@@ -8,7 +9,7 @@ class MessageBox(NostyFrame):
     def __init__(self, message: str, button_text: str = "Continue"):
         self.message = message
         self.button_text = button_text
-        NostyFrame.__init__(self, "Nosty Bot - Select Client", 150)
+        NostyFrame.__init__(self, BASE_NOSTY_TITLE + " - Select Client", 150)
 
     def setup_middle(self, layout_to_add_widget: QVBoxLayout):
         self.text = QLabel(text=self.message)
