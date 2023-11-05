@@ -38,8 +38,11 @@ class Locator(Enum):
     MAP_BUTTON = auto()
     MP_LABEL = auto()
     NOSTALE_TITLE = auto()
+    AVATAR_BALL = auto()
 
     def get_img_path(self):
+        if self == Locator.AVATAR_BALL:
+            return 'src\\locator\\avatar_ball.png'
         if self == Locator.MAP_BUTTON:
             return 'src\\locator\\map_button.png'
         if self == Locator.MP_LABEL:
@@ -54,7 +57,10 @@ class Locator(Enum):
         l, t, r, b = win32gui.GetWindowRect(win.getHandle())
         capture_and_crop_window(win, 0, 0, r-l, b-t).save(HAYSTACK_PATH)
         try:
-            return pyautogui.locate(self.get_img_path(), HAYSTACK_PATH)
+            result = pyautogui.locate(self.get_img_path(), HAYSTACK_PATH, grayscale=True)
+            if result is not None:
+                print('located', self, 'at', result, 'for', win.title)
+            return result
         except pyautogui.ImageNotFoundException:
             return None
 

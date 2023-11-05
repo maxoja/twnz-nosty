@@ -42,6 +42,10 @@ class BotWinInstance:
         # assume other is of the same type
         return self.window_handle == other.window_handle
 
+    def __hash__(self):
+        # assume other is of the same type
+        return self.window_handle
+
 
 class NosTaleWinInstance:
     def __init__(self, wh: int):

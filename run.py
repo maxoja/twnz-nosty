@@ -15,7 +15,6 @@ import twnzui as ui
 from twnzui.instances import NosTaleWinInstance, BotWinInstance
 from twnzui.login_form import LoginResult
 from twnzui.windows import Locator
-from twnzui.sticky import SmallWindow
 
 
 def run_login_block_and_exit_if_failed(app: QApplication):
@@ -30,12 +29,11 @@ def run_login_block_and_exit_if_failed(app: QApplication):
 
 
 class NostyInstanceManager:
-    # TODO remove dead pbot instance from pbot_checked_once, bc it's possible for window handle could get reused
     def __init__(self):
         self.pbot_checked_once: Set[BotWinInstance] = set()
         self.instances: List[NostyBotInstance] = []
 
-    def find_all(self):
+    def create_all(self):
         # find all nostale wins if start first time
         phoenix_wins = BotWinInstance.get_all()
         game_wins = get_game_windows()
@@ -99,6 +97,15 @@ class NostyInstanceManager:
         fg_game_ins = NosTaleWinInstance(foreground_game_win.getHandle())
         return NostyBotInstance(fg_game_ins, best_pbot_ins)
 
+    def close_n_cleanup_instance(self, to_close: [NostyBotInstance]):
+        # TODO remove dead pbot instance from pbot_checked_once, bc it's possible for window handle could get reused
+        for n in to_close:
+            n.on_stop()
+            n.ctrl_win.hide()
+            n.api.close()
+            self.pbot_checked_once.remove(n.bot_win)
+            self.instances.remove(n)
+
 
 def find_more_nosty_instances(current_nosties: List[NostyBotInstance]) -> List[NostyBotInstance]:
     bot_win_handles = [n.bot_win.window_handle for n in current_nosties]
@@ -119,16 +126,17 @@ def create_nosty_instances() -> List[NostyBotInstance]:
 
 
 def game_win_matchable(w: Win32Window):
-    rect = Locator.MAP_BUTTON.find_global_rect_on_window(w)
+    rect = Locator.AVATAR_BALL.find_local_rect_on_window(w)
     if rect is not None: return True
     rect = Locator.MP_LABEL.find_local_rect_on_window(w)
+    if rect is not None: return True
+    rect = Locator.MAP_BUTTON.find_local_rect_on_window(w)
     if rect is not None: return True
     rect = Locator.NOSTALE_TITLE.find_local_rect_on_window(w)
     return rect is not None
 
 
 def distance_pbot_game_info(pbot: BotWinInstance, nost_tuple: Tuple) -> int:
-    print(pbot.window_handle)
     n_name = nost_tuple[1]
     n_lv = nost_tuple[2]
     return string_dist(n_name, pbot.get_player_name()) + (1 if n_lv != pbot.get_player_level() else 0)
@@ -158,12 +166,12 @@ def find_best_pbot_win_for_game_win(game_win: Win32Window, pbots: List[BotWinIns
 
 
 def match_phoenix_n_nostale_wins(phoenix_wins: List[BotWinInstance], game_wins: List[Win32Window]) -> List[NostyBotInstance]:
-    print('before check', len(game_wins))
+    # print('before check', len(game_wins))
     game_wins = [g for g in game_wins if game_win_matchable(g)]
-    print('after check', len(game_wins))
+    # print('after check', len(game_wins))
     game_wins_info = twnzui.windows.get_game_windows_with_name_level_port(game_wins)
-    print('game, game_info, pbot')
-    print(len(game_wins) , len(game_wins_info), len(phoenix_wins))
+    # print('game, game_info, pbot')
+    # print(len(game_wins) , len(game_wins_info), len(phoenix_wins))
 
     pairs = []
     for p in phoenix_wins:
@@ -178,16 +186,8 @@ def match_phoenix_n_nostale_wins(phoenix_wins: List[BotWinInstance], game_wins: 
     return result
 
 
-def close_n_cleanup_instance(to_close: [NostyBotInstance], inst_list: List[NostyBotInstance]):
-    for n in to_close:
-        n.on_stop()
-        n.ctrl_win.hide()
-        n.api.close()
-        inst_list.remove(n)
-
-
-def keep_trying_if_empty_and_prompt_ok(found_nosties: List[NostyBotInstance], prompt: bool=True):
-    while len(found_nosties) == 0:
+def keep_trying_if_empty_and_prompt_ok(nim: NostyInstanceManager, prompt: bool=True):
+    while len(nim.instances) == 0:
         if prompt:
             box = twnzui.misc.MessageBox(
                 "Cannot find any of Phoenix Bot instances.\nMake sure Phoenix Bot is opened before running Nosty Bot", "Retry")
@@ -196,8 +196,7 @@ def keep_trying_if_empty_and_prompt_ok(found_nosties: List[NostyBotInstance], pr
             app.exit(0)
         else:
             sleep(0.1)
-        found_nosties = create_nosty_instances()
-    return found_nosties
+        nim.create_all()
 
 
 if __name__ == "__main__":
@@ -205,25 +204,25 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     # run_login_block_and_exit_if_failed(app)
 
-    nosties = create_nosty_instances()
-    nosties = keep_trying_if_empty_and_prompt_ok(nosties)
+    nim = NostyInstanceManager()
+    nim.create_all()
+    keep_trying_if_empty_and_prompt_ok(nim)
 
-    for n in nosties:
+    for n in nim.instances:
         n.ctrl_win.show()
 
     while True:
-        if len(nosties) == 0:
+        if len(nim.instances) == 0:
             break
 
-        more_nosties = find_more_nosty_instances(nosties)
+        more_nosties = nim.find_n_try_match_new_pbot_wins_update_return()
         for n in more_nosties:
             n.ctrl_win.show()
-        nosties = nosties + more_nosties
 
         to_remove = []
 
         # Standard processing and mark any dead instance
-        for n in nosties:
+        for n in nim.instances:
             if not n.check_alive():
                 to_remove.append(n)
                 continue
@@ -231,7 +230,8 @@ if __name__ == "__main__":
             n.bot_tick()
 
         # Close and cleanup dead instance
-        close_n_cleanup_instance(to_remove, nosties)
+        nim.close_n_cleanup_instance(to_remove)
+        # close_n_cleanup_instance(to_remove, nim.instances)
         app.processEvents()
     app.exit(0)
     exit(0)
