@@ -55,7 +55,11 @@ class Locator(Enum):
     def find_local_rect_on_window(self, win: Win32Window) -> Optional[Tuple[int, int, int, int]]:
         show_win_with_small_delay(win)
         l, t, r, b = win32gui.GetWindowRect(win.getHandle())
-        capture_and_crop_window(win, 0, 0, r-l, b-t).save(HAYSTACK_PATH)
+        cropped = capture_and_crop_window(win, 0, 0, r-l, b-t)
+        if cropped == None:
+            return None
+        cropped.save(HAYSTACK_PATH)
+
         try:
             result = pyautogui.locate(self.get_img_path(), HAYSTACK_PATH, grayscale=True)
             if result is not None:
@@ -144,7 +148,7 @@ def capture_and_crop_window(window, lleft, ltop, lwidth, lheight) -> Optional[An
         return None
 
 
-def get_game_windows_with_name_level_port(game_wins: List[Win32Window]) -> List[Tuple[Win32Window, str, int, int]]:
+def get_game_windows_with_name_level_port(game_wins: List[Win32Window]) -> List[Tuple[Win32Window, str, str, int]]:
     for i, w in enumerate(game_wins):
         show_win_with_small_delay(w)
         crop_player_level_img(w, i)
@@ -156,8 +160,8 @@ def get_game_windows_with_name_level_port(game_wins: List[Win32Window]) -> List[
         port_title = port_title.replace(GAME_TITLE_PREFIX, "")
         port_title = port_title.replace(GAME_TITLE_POSTFIX, "")
         player_name = temp_img_to_text(NAME, i)
-        player_lvl = int(temp_img_to_text(LEVEL, i))
-        result.append((w, player_name, player_lvl, int(port_title)))
+        player_lvl_str = temp_img_to_text(LEVEL, i)
+        result.append((w, player_name, player_lvl_str, int(port_title)))
     for t in result:
         print(t)
     return result

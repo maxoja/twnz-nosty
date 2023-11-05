@@ -173,8 +173,10 @@ def game_win_matchable(w: Win32Window):
 
 def distance_pbot_game_info(pbot: BotWinInstance, nost_tuple: Tuple) -> int:
     n_name = nost_tuple[1]
-    n_lv = nost_tuple[2]
-    return string_dist(n_name, pbot.get_player_name()) + (1 if n_lv != pbot.get_player_level() else 0)
+    n_lv_sr = nost_tuple[2]
+    name_dist = string_dist(n_name, pbot.get_player_name())
+    lvl_dist = string_dist(n_lv_sr, str(pbot.get_player_level()))
+    return name_dist + lvl_dist
 
 def distance_pbot_game_info_wrap_pbot(pbot: BotWinInstance):
     # TODO would pbot get frozen as expected?
@@ -325,5 +327,5 @@ if __name__ == "__main__":
         app.processEvents()
     nim.close_all()
     app.exit(0)
-    exit(0)
+    sys.exit(0)
     # sys.exit(app.exec_())
