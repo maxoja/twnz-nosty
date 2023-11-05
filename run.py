@@ -82,9 +82,9 @@ class NostyInstanceManager:
     def create_all(self):
         # find all nostale wins if start first time
         phoenix_wins = BotWinInstance.get_all()
-        game_wins = get_game_windows()
         self.pbot_checked_once.update(phoenix_wins)
-        self.instances = match_phoenix_n_nostale_wins(phoenix_wins, game_wins)
+        ready_phoenix_wins = [p for p in phoenix_wins if p.ready_to_match()]
+        self.instances = match_v3(ready_phoenix_wins)
 
     def __get_matched_pbots(self):
         return [i.bot_win for i in self.instances]
@@ -114,10 +114,8 @@ class NostyInstanceManager:
         new_pbots = self.__find_new_pbot_wins()
         if len(new_pbots) == 0:
             return []
-
-        unmatched_game = self.__find_unmatched_game_wins()
         self.pbot_checked_once.update(new_pbots)
-        new_matches = match_phoenix_n_nostale_wins(new_pbots, unmatched_game)
+        new_matches = match_v3(new_pbots)
         self.instances.extend(new_matches)
         return new_matches
 
@@ -201,6 +199,7 @@ def find_best_pbot_win_for_game_win(game_win: Win32Window, pbots: List[BotWinIns
     pbots.sort(key=distance_pbot_game_info_wrap_nost_tuple(game_win_info), reverse=True)
     return pbots[0]
 
+
 def match_v3(phoenix_wins: List[BotWinInstance]) -> List[NostyBotInstance]:
     if len(phoenix_wins) == 0:
         return []
@@ -208,34 +207,10 @@ def match_v3(phoenix_wins: List[BotWinInstance]) -> List[NostyBotInstance]:
     for p in phoenix_wins:
         game_pid = get_game_pid_from_bot_port(p.get_port())
         game_win = get_win_of_pid(game_pid)
-        game_ins = NosTaleWinInstance(game_win.getHandler())
+        if game_win is None:
+            continue
+        game_ins = NosTaleWinInstance(game_win.getHandle())
         result.append(NostyBotInstance(game_ins, p))
-    return result
-
-def match_phoenix_n_nostale_wins(phoenix_wins: List[BotWinInstance], game_wins: List[Win32Window]) -> List[NostyBotInstance]:
-    if len(phoenix_wins) == 0:
-        return []
-    # print('before check', len(game_wins))
-    game_wins = [g for g in game_wins if game_win_matchable(g)]
-    # print('after check', len(game_wins))
-    if len(game_wins) == 0:
-        return []
-    game_wins_info = twnzui.windows.get_game_windows_with_name_level_port(game_wins)
-    # print('game, game_info, pbot')
-    # print(len(game_wins) , len(game_wins_info), len(phoenix_wins))
-
-    pairs = []
-    for p in phoenix_wins:
-        if len(game_wins_info) == 0:
-            break
-        best_game_win = find_best_game_win_for_pbot_remove_inplace(p, game_wins_info)
-        pairs.append((p, best_game_win))
-
-    result = []
-    for p in pairs:
-        phoenix_ins, nostale_ins = p
-        result.append(NostyBotInstance(nostale_ins, phoenix_ins))
-
     return result
 
 

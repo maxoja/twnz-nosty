@@ -86,6 +86,8 @@ class NostyBotInstance:
             if packet_str is not None and "No" in packet_str and "NONE_CII" in packet_str:
                 # print('mark for remove')
                 self.should_be_removed = True
+        if self.bot_win.get_player_level() == 0:
+            self.should_be_removed = True
 
     def tick_entry(self):
         if not self.api.working():
