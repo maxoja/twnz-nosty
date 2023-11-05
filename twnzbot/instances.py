@@ -1,10 +1,12 @@
 import json
+from typing import List
 
 import win32gui
+from PyQt5.QtWidgets import QAction
 
 import twnzui
 from phoenixapi import phoenix
-from twnzbot import enums, base, more
+from twnzbot import enums, base, more, qol
 from twnzbot.enums import Mode
 from twnzbot.models import NostyStates
 from twnzui.instances import NosTaleWinInstance, BotWinInstance
@@ -14,6 +16,8 @@ from twnzui.sticky import SmallWindow, update_small_windows_positions
 def get_logic_for_mode(m: enums.Mode, api: phoenix.Api, states: NostyStates, ctrl_win: SmallWindow):
     if m == enums.Mode.NONE:
         return base.NostyEmptyLogic(api, states, ctrl_win)
+    elif m == enums.Mode.PHOENIX:
+        return qol.NostyPhoenixLogic(api, states, ctrl_win)
     elif m == enums.Mode.BROKEN_GURI:
         return more.NostyGuriLogic(api, states, ctrl_win)
     elif m == enums.Mode.PICK_ITEMS_ONESHOT:
@@ -35,8 +39,7 @@ class NostyBotInstance:
         self.api = phoenix.Api(bot_win.get_port())
         self.states = NostyStates()
         self.bind_ctrl()
-        # assume states.mode is initially Mode.NONE
-        self.load_logic(Mode.NONE)
+        self.load_logic(NostyStates.INITIAL_MODE)
         self.should_be_removed = False
 
     def bind_ctrl(self):
@@ -74,11 +77,12 @@ class NostyBotInstance:
         except: return False
         return True
 
-    def update(self):
+    def update(self, party_selector_actions: List[QAction]):
         left, top, _, _ = self.game_win.get_rect()
         visible = twnzui.utils.is_window_partially_visible(self.game_win.window_handle)
         game_win_info = (left, top, self.game_win.get_title(), visible)
         update_small_windows_positions([self.ctrl_win], [game_win_info], (110, 31))
+        self.ctrl_win.set_party_selector(party_selector_actions)
 
     def instance_level_tick(self, json_msg: dict):
         type_num = json_msg["type"]

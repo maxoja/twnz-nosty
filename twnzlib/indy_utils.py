@@ -9,6 +9,13 @@ import win32process
 
 from twnzlib.const import GAME_TITLE_PREFIX, PHOENIX_TITLE_INFIX
 
+
+def get_window_of_handle(handle: int):
+    for w in pwc.getAllWindows():
+        if w.getHandle() == handle:
+            return w
+    return None
+
 def get_game_pid_from_bot_port(bot_port: int):
     for conn in psutil.net_connections(kind='tcp'):
         if conn.laddr.port == bot_port:
