@@ -59,14 +59,16 @@ class NostyInstanceManager:
             fg_win = pwc.getActiveWindow()
             if "NosTale - (" in fg_win.title:
                 return fg_win
-        except:
             return None
-        finally:
+        except:
             return None
 
     def find_n_try_match_new_pbot_wins_update_return(self) -> List[NostyBotInstance]:
         # new phoenix_box started, fidn matching nostale win
         new_pbots = self.__find_new_pbot_wins()
+        if len(new_pbots) == 0:
+            return []
+
         unmatched_game = self.__find_unmatched_game_wins()
         self.pbot_checked_once.update(new_pbots)
         new_matches = match_phoenix_n_nostale_wins(new_pbots, unmatched_game)
@@ -95,7 +97,9 @@ class NostyInstanceManager:
         # we now have unmatched pbot with active game that's matchable and not yet matched
         best_pbot_ins = find_best_pbot_win_for_game_win(foreground_game_win, pbots_to_match)
         fg_game_ins = NosTaleWinInstance(foreground_game_win.getHandle())
-        return NostyBotInstance(fg_game_ins, best_pbot_ins)
+        new_nosty = NostyBotInstance(fg_game_ins, best_pbot_ins)
+        self.instances.append(new_nosty)
+        return new_nosty
 
     def close_n_cleanup_instances(self, to_close: [NostyBotInstance]):
         # TODO remove dead pbot instance from pbot_checked_once, bc it's possible for window handle could get reused
@@ -113,8 +117,8 @@ def game_win_matchable(w: Win32Window):
     rect = Locator.MP_LABEL.find_local_rect_on_window(w)
     if rect is not None: return True
     rect = Locator.MAP_BUTTON.find_local_rect_on_window(w)
-    if rect is not None: return True
-    rect = Locator.NOSTALE_TITLE.find_local_rect_on_window(w)
+    # intentionally don't try to locate Locator.NOSTALE_TITLE
+    # because it will also be there in server selection screen
     return rect is not None
 
 
@@ -131,32 +135,38 @@ def distance_pbot_game_info_wrap_nost_tuple(nost_tuple: Tuple):
     # TODO would game_info get frozen as expected?
     return lambda pbot: distance_pbot_game_info(pbot, nost_tuple)
 
-# Note -> it's ok to not have perfect match - we can just have UI to allow manual match later
 
 def find_best_game_win_for_pbot_remove_inplace(p:BotWinInstance, game_win_info: List[Tuple]) -> NosTaleWinInstance:
-    # TODO this assumes there will always be a match but that's not always the case
-    # how to know when that's the case -> the win wouldn't be matchable?
-    # what to do when we know that?
-    # can we assume at this point that all given wins are matchable?
+    # game_win must not be None nor empty
+    # pbots must not be None nor empty
     game_win_info.sort(key=distance_pbot_game_info_wrap_pbot(p), reverse=True)
     return NosTaleWinInstance(game_win_info.pop()[0].getHandle())
 
+
 def find_best_pbot_win_for_game_win(game_win: Win32Window, pbots: List[BotWinInstance]) -> BotWinInstance:
+    # game_win must not be None nor empty
+    # pbots must not be None nor empty
     game_win_info = twnzui.windows.get_game_windows_with_name_level_port([game_win])[0]
     pbots.sort(key=distance_pbot_game_info_wrap_nost_tuple(game_win_info), reverse=True)
     return pbots[0]
 
 
 def match_phoenix_n_nostale_wins(phoenix_wins: List[BotWinInstance], game_wins: List[Win32Window]) -> List[NostyBotInstance]:
+    if len(phoenix_wins) == 0:
+        return []
     # print('before check', len(game_wins))
     game_wins = [g for g in game_wins if game_win_matchable(g)]
     # print('after check', len(game_wins))
+    if len(game_wins) == 0:
+        return []
     game_wins_info = twnzui.windows.get_game_windows_with_name_level_port(game_wins)
     # print('game, game_info, pbot')
     # print(len(game_wins) , len(game_wins_info), len(phoenix_wins))
 
     pairs = []
     for p in phoenix_wins:
+        if len(game_wins_info) == 0:
+            break
         best_game_win = find_best_game_win_for_pbot_remove_inplace(p, game_wins_info)
         pairs.append((p, best_game_win))
 
@@ -195,9 +205,14 @@ if __name__ == "__main__":
 
     while True:
         if len(nim.instances) == 0:
-            break
+            sleep(1)
 
         more_nosties = nim.find_n_try_match_new_pbot_wins_update_return()
+        if len(more_nosties) == 0:
+            new_nosty = nim.find_active_game_and_try_match_with_leftover_pbot_update_n_return()
+            if new_nosty is not None:
+                more_nosties = [new_nosty]
+
         for n in more_nosties:
             n.ctrl_win.show()
 
