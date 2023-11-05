@@ -32,7 +32,7 @@ class SmallWindow(QMainWindow):
         self.setPalette(palette)
 
         self.setFixedSize(133, 16)
-        self.setWindowTitle('Small Window ' + str(SmallWindow.count))
+        self.setWindowTitle('Nosty Bot - Small Window ' + str(SmallWindow.count))
         self.player_label = QLabel(player_name, self)
         self.player_label.setStyleSheet("color: white;")
 
@@ -148,6 +148,7 @@ def update_small_windows_positions(small_windows: [SmallWindow], target_wins_inf
 
 
 if __name__ == "__main__":
+    # this is quite outdated
     app = QApplication(sys.argv)
 
     small_windows = [SmallWindow("Phoenix Bot"), SmallWindow("NosTale")]

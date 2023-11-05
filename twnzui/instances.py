@@ -29,7 +29,7 @@ class BotWinInstance:
             return 0
         return int(title.split("(+")[1].split(")")[0])
 
-    def get_port(self):
+    def get_port(self) -> int:
         return int(self.get_title().split(":")[-1])
 
     @staticmethod
@@ -37,6 +37,21 @@ class BotWinInstance:
         windows = get_phoenix_windows()
         handle_blacklist = [] if handle_blacklist is None else handle_blacklist
         return [BotWinInstance(w.getHandle()) for w in windows if w.getHandle() not in handle_blacklist]
+
+    @staticmethod
+    def get_all_that_is_ready():
+        return [r for r in BotWinInstance.get_all() if r.ready_to_match()]
+
+    def ready_to_match(self):
+        return self.get_player_level() != 0
+
+    def __eq__(self, other):
+        # assume other is of the same type
+        return self.window_handle == other.window_handle
+
+    def __hash__(self):
+        # assume other is of the same type
+        return self.window_handle
 
 
 class NosTaleWinInstance:
@@ -67,3 +82,7 @@ class NosTaleWinInstance:
 
     def get_top(self):
         return self.get_left_top()[1]
+
+    def __eq__(self, other):
+        # assume other is of the same type
+        return self.window_handle == other.window_handle
