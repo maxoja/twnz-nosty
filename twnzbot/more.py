@@ -94,7 +94,6 @@ class NostyQuickHandLogic(twnzbot.base.NostyEmptyLogic):
             if cal_distance((me_now['y'], me_now['x']), (self.next_item.y, self.next_item.x)) > NostyQuickHandLogic.PICK_DIST:
                 self.api.player_walk(self.next_item.x, self.next_item.y)
             else:
-                self.api.player_walk(me_now['x'], me_now['y'])
                 self.api.send_packet(f'get 1 {me_now["id"]} {self.next_item.id}')
             self.next_act_allow = self.get_next_act_time()
 
