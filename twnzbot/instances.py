@@ -35,6 +35,7 @@ class NostyBotInstance:
         self.bind_ctrl()
         # assume states.mode is initially Mode.NONE
         self.load_logic(Mode.NONE)
+        self.should_be_removed = False
 
     def bind_ctrl(self):
         self.ctrl_win.start_cb = self.on_start
@@ -77,9 +78,19 @@ class NostyBotInstance:
         game_win_info = (left, top, self.game_win.get_title(), visible)
         update_small_windows_positions([self.ctrl_win], [game_win_info], (110, 31))
 
-    def bot_tick(self):
+    def instance_level_tick(self, json_msg: dict):
+        type_num = json_msg["type"]
+        if type_num == phoenix.Type.packet_send.value:
+            packet_str = json_msg["packet"]
+            # print(packet_str)
+            if packet_str is not None and "No" in packet_str and "NONE_CII" in packet_str:
+                # print('mark for remove')
+                self.should_be_removed = True
+
+    def tick_entry(self):
         if not self.api.working():
             print("ERROR: api not working", self.bot_win.get_title())
+            self.should_be_removed = True
             return
 
         # occasional_log(self.api, self.bot_win.get_player_name())
@@ -90,7 +101,7 @@ class NostyBotInstance:
         json_msg = json.loads(self.api.get_message())
 
         # SECTION: always on
-        # do something here
+        self.instance_level_tick(json_msg)
 
         if not self.states.running:
             return

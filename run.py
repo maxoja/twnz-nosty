@@ -4,7 +4,7 @@ import signal
 import sys
 from typing import List, Set, Optional, Tuple
 
-import win32gui
+import psutil
 from PyQt5.QtWidgets import QApplication
 from pygetwindow import Win32Window
 
@@ -268,7 +268,7 @@ if __name__ == "__main__":
 
     nim = NostyInstanceManager()
     nim.create_all()
-    keep_trying_if_empty_and_prompt_ok(nim)
+    # keep_trying_if_empty_and_prompt_ok(nim)
 
     for n in nim.instances:
         n.ctrl_win.show()
@@ -294,7 +294,10 @@ if __name__ == "__main__":
                 to_remove.append(n)
                 continue
             n.update()
-            n.bot_tick()
+            n.tick_entry()
+            if n.should_be_removed:
+                to_remove.append(n)
+                continue
 
         nim.close_n_cleanup_instances(to_remove)
         app.processEvents()
