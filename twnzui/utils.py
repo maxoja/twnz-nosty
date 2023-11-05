@@ -1,3 +1,4 @@
+import pywinctl
 import win32gui
 import win32con
 import win32api
@@ -34,6 +35,10 @@ def get_windows():
 
 
 def is_window_partially_visible(target_window_handle: int):
+    active_win = pywinctl.getActiveWindow()
+    if active_win is not None and active_win.getHandle() == target_window_handle:
+        return True
+
     screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
     screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
 
