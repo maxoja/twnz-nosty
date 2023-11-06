@@ -8,6 +8,8 @@ import win32con
 import win32gui
 from pywinctl._pywinctl_win import Win32Window
 
+from twnz.win.basic import get_all_monitor_handles
+
 
 def show_win_with_small_delay(window:Win32Window):
     win32gui.ShowWindow(window.getHandle(), win32con.SW_RESTORE)
@@ -39,17 +41,33 @@ def get_screen_dimensions_for_monitor(monitor_handle):
 
 
 def is_window_partially_visible(target_window_handle: int):
-    screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
-    screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
+    monitor_handles = get_all_monitor_handles()
+    for m in monitor_handles:
+        if is_window_partially_visible_on_monitor(target_window_handle, m):
+            return True
+    return False
 
+
+def is_window_partially_visible_on_monitor(target_window_handle: int, monitor_handle: int):
+
+    monitor_info = win32api.GetMonitorInfo(monitor_handle)
+    monitor_rect_ltrb = monitor_info['Monitor']
+    screen_width = monitor_rect_ltrb[2] - monitor_rect_ltrb[0]
+    screen_height = monitor_rect_ltrb[3] - monitor_rect_ltrb[1]
     screen_array = np.full((screen_height, screen_width), False, dtype=bool)
 
     if not target_window_handle:
         print('window not found')
         return False  # Window not found
 
-    target_rect = win32gui.GetWindowRect(target_window_handle)
-    __mark_window_area(screen_array, target_rect, True)
+    target_rect_ltrb = win32gui.GetWindowRect(target_window_handle)
+    target_rect_ltrb = (
+        target_rect_ltrb[0] - monitor_rect_ltrb[0],
+        target_rect_ltrb[1] - monitor_rect_ltrb[1],
+        target_rect_ltrb[2] - monitor_rect_ltrb[0],
+        target_rect_ltrb[3] - monitor_rect_ltrb[1]
+    )
+    __mark_window_area(screen_array, target_rect_ltrb, True)
 
     all_win_handles = get_z_ordered_windows()
     for w in all_win_handles:

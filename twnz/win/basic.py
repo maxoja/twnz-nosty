@@ -1,7 +1,8 @@
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 import psutil
 import pywinctl as pwc
+import win32api
 import win32gui
 import win32process
 
@@ -41,6 +42,10 @@ def get_all_handles():
 
 def get_phoenix_windows():
     return [ w for w in pwc.getAllWindows() if PHOENIX_TITLE_INFIX in w.title ]
+
+
+def get_all_monitor_handles() -> List[int]:
+    return [t[0] for t in win32api.EnumDisplayMonitors()]
 
 
 def get_game_windows(handle_blacklist=None):
