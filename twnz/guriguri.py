@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from twnzlib.conversions import ndeg_to_rdeg
+from twnz.conversions import ndeg_to_rdeg
 
 
 def find_intersection_xy(npoint1, npoint2, map_h):

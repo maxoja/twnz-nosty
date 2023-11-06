@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QMessageBox, QVBoxLayout
 from PyQt5.QtCore import Qt
 
-from twnzlib.const import BASE_NOSTY_TITLE
-from twnzui.const import *
-from twnzui.title_bar import CustomTitleBar
+from twnz.const import BASE_NOSTY_TITLE
+from twnz.ui.const import *
+from twnz.ui.title_bar import CustomTitleBar
 
 
 class NostyFrame(QMainWindow):

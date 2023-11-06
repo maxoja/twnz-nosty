@@ -4,13 +4,14 @@ from typing import List
 import win32gui
 from PyQt5.QtWidgets import QAction
 
-import twnzui
+import twnz
+import twnz.win.all
 from phoenixapi import phoenix
-from twnzbot import enums, base, more, qol
-from twnzbot.enums import Mode
-from twnzbot.models import NostyStates
-from twnzui.instances import NosTaleWinInstance, BotWinInstance
-from twnzui.sticky import SmallWindow, update_small_windows_positions
+from twnz.bot import enums, base, qol, more
+from twnz.bot.enums import Mode
+from twnz.bot.models import NostyStates
+from twnz.ui.instances import NosTaleWinInstance, BotWinInstance
+from twnz.ui.sticky import SmallWindow, update_small_windows_positions
 
 
 def get_logic_for_mode(m: enums.Mode, api: phoenix.Api, states: NostyStates, ctrl_win: SmallWindow):
@@ -79,7 +80,7 @@ class NostyBotInstance:
 
     def update(self, party_selector_actions: List[QAction]):
         left, top, _, _ = self.game_win.get_rect()
-        visible = twnzui.utils.is_window_partially_visible(self.game_win.window_handle)
+        visible = twnz.win.all.is_window_partially_visible(self.game_win.window_handle)
         game_win_info = (left, top, self.game_win.get_title(), visible)
         update_small_windows_positions([self.ctrl_win], [game_win_info], (110, 31))
         self.ctrl_win.set_party_selector(party_selector_actions)

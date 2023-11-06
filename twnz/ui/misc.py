@@ -1,8 +1,8 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QSizePolicy, QLabel
+from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QLabel
 
-from twnzlib.const import BASE_NOSTY_TITLE
-from twnzui.frame import NostyFrame
+from twnz.const import BASE_NOSTY_TITLE
+from twnz.ui.frame import NostyFrame
 
 
 class MessageBox(NostyFrame):

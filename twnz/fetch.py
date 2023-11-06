@@ -3,8 +3,8 @@ from typing import Union
 from phoenixapi import phoenix
 import json
 from time import sleep
-from twnzlib import config
-from twnzlib.models import MapEntity
+from twnz import config
+from twnz.models import MapEntity
 
 
 def fetch_current_y_x_map_id(api: phoenix.Api):

@@ -2,7 +2,7 @@ from collections import deque
 
 import numpy as np
 
-from twnzlib import print_map
+from twnz import print_map
 
 
 def find_walk_path_pruned(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple):

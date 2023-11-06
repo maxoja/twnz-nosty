@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QSizePolicy
 
-from twnzlib.const import BASE_NOSTY_TITLE
-from twnzui.frame import NostyFrame
+from twnz.const import BASE_NOSTY_TITLE
+from twnz.ui.frame import NostyFrame
 
 class PortSelectionGUI(NostyFrame):
     def __init__(self, ports: [tuple], out_port: list):

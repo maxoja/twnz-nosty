@@ -1,7 +1,7 @@
 from phoenixapi import phoenix
-from twnzbot.enums import Mode
-from twnzbot.models import NostyStates
-from twnzui.sticky import SmallWindow
+from twnz.bot.enums import Mode
+from twnz.bot.models import NostyStates
+from twnz.ui.sticky import SmallWindow
 
 
 class NostyEmptyLogic:

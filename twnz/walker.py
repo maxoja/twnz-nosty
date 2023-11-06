@@ -3,7 +3,7 @@ from time import time, sleep
 import numpy as np
 
 from phoenixapi import phoenix
-from twnzlib import find_walk_path_pruned, fetch_current_y_x_map_id, config
+from twnz import find_walk_path_pruned, fetch_current_y_x_map_id, config
 
 def walk_nearby(api: phoenix.Api, map_array: np.ndarray, current_npoint: tuple):
     # TODO

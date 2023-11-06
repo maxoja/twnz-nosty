@@ -2,7 +2,7 @@ from typing import List, Optional
 
 import win32gui
 
-from twnzlib import get_phoenix_windows
+from twnz.win.basic import get_phoenix_windows
 
 
 class BotWinInstance:
