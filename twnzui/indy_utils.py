@@ -1,4 +1,5 @@
 import time
+from typing import List
 
 import pyautogui
 import win32api
@@ -23,6 +24,8 @@ def get_monitor_from_window(window_handle):
     monitor_handle = win32api.MonitorFromWindow(window_handle, win32con.MONITOR_DEFAULTTONEAREST)
     return monitor_handle
 
+def get_all_monitor_handles() -> List[int]:
+    return [t[0] for t in win32api.EnumDisplayMonitors()]
 
 def get_screen_dimensions_for_monitor(monitor_handle):
     try:
