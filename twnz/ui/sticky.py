@@ -6,11 +6,10 @@ from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QMessageBox, QApplication, QWidget, QHBoxLayout, QMenu, \
     QAction
 
-import twnzbot
-import twnzui
 import pywinctl as pwc
-
-from twnzbot.models import NostyStates
+import twnz
+import twnz.win.all
+from twnz.bot.models import NostyStates
 
 
 class SmallWindow(QMainWindow):
@@ -51,8 +50,8 @@ class SmallWindow(QMainWindow):
         # Create a QMenu for the dropdown options
         self.menu = QMenu()
         self.main_actions = []
-        for mode in twnzbot.enums.Mode:
-            if mode != twnzbot.enums.Mode.PHOENIX:
+        for mode in twnz.bot.enums.Mode:
+            if mode != twnz.bot.enums.Mode.PHOENIX:
                 # intentional for first free version
                 continue
             option_action = QAction(mode, self, checkable=True)
@@ -91,7 +90,7 @@ class SmallWindow(QMainWindow):
             action.setChecked(True)
 
             if self.mode_cb is not None:
-                self.mode_cb(twnzbot.enums.Mode(mode))
+                self.mode_cb(twnz.bot.enums.Mode(mode))
         else:
             # show another game client
             pass
@@ -123,8 +122,6 @@ class SmallWindow(QMainWindow):
         for a in self.party_selector_actions:
             self.menu.addAction(a)
 
-
-
     def show_popup(self):
         return
         message = f"Hello from the {self.target_title} window!"
@@ -142,7 +139,7 @@ def get_target_window_positions():
     # time.sleep(600000)
     for w in windows:
         if "Small Window".upper() not in w.title.upper() and ("Phoenix Bot" in w.title or "NosTale - ".upper() in w.title.upper()):
-            positions.append((w.left, w.top, w.title, twnzui.utils.is_window_partially_visible(w.title)))
+            positions.append((w.left, w.top, w.title, twnz.win.all.is_window_partially_visible(w.title)))
         else:
             # print('hitting else')
             # print(w.title)

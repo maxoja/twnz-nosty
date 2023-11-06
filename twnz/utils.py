@@ -1,5 +1,5 @@
 import random
-from twnzlib import fetch_current_y_x_map_id
+from twnz import fetch_current_y_x_map_id
 
 
 def occasional_log(api, player_name=""):

@@ -1,5 +1,4 @@
-import phoenixapi.phoenix
-from twnzbot.enums import Mode
+from twnz.bot.enums import Mode
 
 
 class NostyStates:

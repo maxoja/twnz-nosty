@@ -2,7 +2,7 @@ from PyQt5.QtGui import QColor, QPalette
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QHBoxLayout
 from PyQt5.QtCore import Qt, QPoint
 
-from twnzui.const import *
+from twnz.ui.const import *
 
 
 class CustomTitleBar(QWidget):

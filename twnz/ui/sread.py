@@ -1,36 +1,17 @@
-import time
-from enum import Enum, auto
-from typing import List, Optional, Tuple, Any
-
-import pywinctl
-import requests
 import json
+from enum import Enum, auto
+from typing import Optional, Tuple, Any
 
 import pyautogui
-import win32api
+import requests
 import win32gui
-import win32con
-from PIL import Image
 from pywinctl._pywinctl_win import Win32Window
 
-from twnzlib import get_game_windows
-from twnzlib.const import GAME_TITLE_POSTFIX, GAME_TITLE_PREFIX, PHOENIX_TITLE_INFIX
+from twnz.win.all import show_win_with_small_delay, get_monitor_from_window, get_screen_dimensions_for_monitor
 
 TEMP_PNG = "eieitemp.png"
-
 NAME = "name"
 LEVEL = "level"
-DELAY = 0.02
-
-def show_win_with_small_delay(window:Win32Window):
-    win32gui.ShowWindow(window.getHandle(), win32con.SW_RESTORE)
-    pyautogui.press('alt')
-    win32gui.SetForegroundWindow(window.getHandle())
-    while not win32gui.IsWindowVisible(window.getHandle()):
-        pass
-    time.sleep(DELAY)
-
-
 HAYSTACK_PATH = 'haystacktemp.png'
 
 
@@ -103,23 +84,6 @@ def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop
         stdout = stdout.split("(")[0]
     return stdout
 
-def get_monitor_from_window(window_handle):
-    monitor_handle = win32api.MonitorFromWindow(window_handle, win32con.MONITOR_DEFAULTTONEAREST)
-    return monitor_handle
-
-def get_screen_dimensions_for_monitor(monitor_handle):
-    try:
-        # Get monitor info
-        monitor_info = win32api.GetMonitorInfo(monitor_handle)
-
-        # Calculate the screen width and height
-        screen_width = monitor_info['Monitor'][2] - monitor_info['Monitor'][0]
-        screen_height = monitor_info['Monitor'][3] - monitor_info['Monitor'][1]
-
-        return screen_width, screen_height
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
 
 def capture_and_crop_window(window, lleft, ltop, lwidth, lheight) -> Optional[Any]:
     try:
@@ -146,32 +110,3 @@ def capture_and_crop_window(window, lleft, ltop, lwidth, lheight) -> Optional[An
     except Exception as e:
         print(f"Error capturing window: {str(e)}")
         return None
-
-
-def get_game_windows_with_name_level_port(game_wins: List[Win32Window]) -> List[Tuple[Win32Window, str, str, int]]:
-    for i, w in enumerate(game_wins):
-        show_win_with_small_delay(w)
-        crop_player_level_img(w, i)
-        crop_player_name_img(w, i)
-
-    result = []
-    for i, w in enumerate(game_wins):
-        port_title = w.title
-        port_title = port_title.replace(GAME_TITLE_PREFIX, "")
-        port_title = port_title.replace(GAME_TITLE_POSTFIX, "")
-        player_name = temp_img_to_text(NAME, i)
-        player_lvl_str = temp_img_to_text(LEVEL, i)
-        result.append((w, player_name, player_lvl_str, int(port_title)))
-    for t in result:
-        print(t)
-    return result
-
-
-def crop_player_level_img(window, i:int):
-    fname = f'{LEVEL}-{i}-{TEMP_PNG}'
-    capture_and_crop_window(window, lleft=80, ltop=30, lwidth=30, lheight=20).save(fname)
-
-def crop_player_name_img(window, i:int):
-    fname = f'{NAME}-{i}-{TEMP_PNG}'
-    capture_and_crop_window(window, lleft=110, ltop=30, lwidth=137, lheight=20).save(fname)
-

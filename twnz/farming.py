@@ -1,7 +1,7 @@
 import time
 
-from twnzlib import fetch, cal_distance
-from twnzlib.models import MapEntity, PlayerEntity
+from twnz import fetch, cal_distance
+from twnz.models import MapEntity, PlayerEntity
 
 
 def find_closest_monster_autoload(api, vnum_whitelist=None, vnum_blacklist=None):

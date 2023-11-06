@@ -1,6 +1,6 @@
 import pickle
 from os import path
-from twnzlib import config
+from twnz import config
 
 
 cred_path = path.join(config.RESOURCE_FOLDER, config.CRED_FILE)

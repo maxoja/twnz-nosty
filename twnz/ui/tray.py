@@ -15,4 +15,4 @@ class NostyTray:
 
 
 if __name__ == "__main__":
-    NostyTray(lambda : print("byeee"), "..\\src\\tray_icon.png")
+    NostyTray(lambda : print("byeee"), "../../src/tray_icon.png")

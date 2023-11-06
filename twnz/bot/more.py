@@ -2,12 +2,12 @@ import random
 import time
 from typing import Optional, List
 
-import twnzbot.base
+import twnz.bot.base
 from phoenixapi import phoenix
-from twnzbot.enums import Mode
-from twnzlib import fetch_current_y_x_map_id, image_to_binary_array, walk_to, find_intersection_xy, fetch_map_entities, \
+from twnz.bot.enums import Mode
+from twnz import fetch_current_y_x_map_id, image_to_binary_array, walk_to, find_intersection_xy, fetch_map_entities, \
     fetch_player_info, cal_distance
-from twnzlib.models import ItemEntity
+from twnz.models import ItemEntity
 
 
 def go_to_treasure(api: phoenix.Api, treasure_point_yx):
@@ -17,7 +17,7 @@ def go_to_treasure(api: phoenix.Api, treasure_point_yx):
     walk_to(api, map_array, treasure_point_yx)
 
 
-class NostyGuriLogic(twnzbot.base.NostyEmptyLogic):
+class NostyGuriLogic(twnz.bot.base.NostyEmptyLogic):
     def get_mode(self):
         return Mode.BROKEN_GURI
 
@@ -46,7 +46,7 @@ class NostyGuriLogic(twnzbot.base.NostyEmptyLogic):
             self.guri_points = []
 
 
-class NostyQuickHandLogic(twnzbot.base.NostyEmptyLogic):
+class NostyQuickHandLogic(twnz.bot.base.NostyEmptyLogic):
     DELAY_CHECK = 0
     DELAY_ACT = 0.15
     BUFFER_ACT = 0.05
@@ -187,7 +187,7 @@ class NostyQuickHandForeverLogic(NostyQuickHandLogic):
             self.next_check_allow = time.time() + NostyQuickHandLogic.DELAY_CHECK
 
 
-class NostyExperimentLogic(twnzbot.base.NostyEmptyLogic):
+class NostyExperimentLogic(twnz.bot.base.NostyEmptyLogic):
     def get_mode(self):
         return Mode.EXPERIMENT
 

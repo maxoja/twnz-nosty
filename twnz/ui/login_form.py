@@ -1,16 +1,15 @@
-from PyQt5.QtGui import QPixmap, QColor, QPainter, QBitmap, QPalette
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QLineEdit, QCheckBox, QMessageBox, \
-    QVBoxLayout, QLabel, QHBoxLayout, QGraphicsDropShadowEffect, QFrame
-from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QHBoxLayout
+from PyQt5.QtCore import Qt
 
 from pocketbase import PocketBase  # Import PocketBase from your module
 
-from twnzlib.const import BASE_NOSTY_TITLE
-from twnzpb import flows
-from twnzlib import resource
-from twnzui.const import *
-from twnzui.banner import Hammy
-from twnzui.frame import NostyFrame
+from twnz.const import BASE_NOSTY_TITLE
+from twnz.pb import flows
+from twnz import resource
+from twnz.ui.const import *
+from twnz.ui.banner import Hammy
+from twnz.ui.frame import NostyFrame
 
 
 class LoginResult:
