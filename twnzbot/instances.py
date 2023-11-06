@@ -18,12 +18,6 @@ def get_logic_for_mode(m: enums.Mode, api: phoenix.Api, states: NostyStates, ctr
         return base.NostyEmptyLogic(api, states, ctrl_win)
     elif m == enums.Mode.PHOENIX:
         return qol.NostyPhoenixLogic(api, states, ctrl_win)
-    elif m == enums.Mode.BROKEN_GURI:
-        return more.NostyGuriLogic(api, states, ctrl_win)
-    elif m == enums.Mode.PICK_ITEMS_ONESHOT:
-        return more.NostyQuickHandLogic(api, states, ctrl_win)
-    elif m == enums.Mode.PICK_ITEMS_FOREVER:
-        return more.NostyQuickHandForeverLogic(api, states, ctrl_win)
     elif m == enums.Mode.EXPERIMENT:
         return more.NostyExperimentLogic(api, states, ctrl_win)
     else:

@@ -1,81 +1,20 @@
-import time
-from enum import Enum, auto
 from typing import List, Optional, Tuple, Any
 
-import pywinctl
 import requests
 import json
 
 import pyautogui
-import win32api
-import win32gui
-import win32con
-from PIL import Image
 from pywinctl._pywinctl_win import Win32Window
 
-from twnzlib import get_game_windows
-from twnzlib.const import GAME_TITLE_POSTFIX, GAME_TITLE_PREFIX, PHOENIX_TITLE_INFIX
+from twnzlib.const import GAME_TITLE_POSTFIX, GAME_TITLE_PREFIX
+from twnzui.indy_utils import show_win_with_small_delay, get_monitor_from_window, get_screen_dimensions_for_monitor
 
 TEMP_PNG = "eieitemp.png"
 
 NAME = "name"
 LEVEL = "level"
-DELAY = 0.02
-
-def show_win_with_small_delay(window:Win32Window):
-    win32gui.ShowWindow(window.getHandle(), win32con.SW_RESTORE)
-    pyautogui.press('alt')
-    win32gui.SetForegroundWindow(window.getHandle())
-    while not win32gui.IsWindowVisible(window.getHandle()):
-        pass
-    time.sleep(DELAY)
-
 
 HAYSTACK_PATH = 'haystacktemp.png'
-
-
-class Locator(Enum):
-    MAP_BUTTON = auto()
-    MP_LABEL = auto()
-    NOSTALE_TITLE = auto()
-    AVATAR_BALL = auto()
-
-    def get_img_path(self):
-        if self == Locator.AVATAR_BALL:
-            return 'src\\locator\\avatar_ball.png'
-        if self == Locator.MAP_BUTTON:
-            return 'src\\locator\\map_button.png'
-        if self == Locator.MP_LABEL:
-            return 'src\\locator\\mp_label.png'
-        if self == Locator.NOSTALE_TITLE:
-            return 'src\\locator\\nostale_title.png'
-        else:
-            raise Exception('undefined img path for enum ' + str(self.name))
-
-    def find_local_rect_on_window(self, win: Win32Window) -> Optional[Tuple[int, int, int, int]]:
-        show_win_with_small_delay(win)
-        l, t, r, b = win32gui.GetWindowRect(win.getHandle())
-        cropped = capture_and_crop_window(win, 0, 0, r-l, b-t)
-        if cropped == None:
-            return None
-        cropped.save(HAYSTACK_PATH)
-
-        try:
-            result = pyautogui.locate(self.get_img_path(), HAYSTACK_PATH, grayscale=True)
-            if result is not None:
-                print('located', self, 'at', result, 'for', win.title)
-            return result
-        except pyautogui.ImageNotFoundException:
-            return None
-
-    def find_global_rect_on_window(self, win:Win32Window) -> Optional[Tuple[int, int, int ,int]]:
-        rect = self.find_local_rect_on_window(win)
-        if rect is None:
-            return None
-        ll, lt, lw, lh = rect
-        gl, gt, gw, gh = win32gui.GetWindowRect(win.getHandle())
-        rect = (ll+gl, lt+gt, lw+gw, lh+gh)
-        return rect
 
 
 def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop.sh/tesseract"):
@@ -103,23 +42,6 @@ def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop
         stdout = stdout.split("(")[0]
     return stdout
 
-def get_monitor_from_window(window_handle):
-    monitor_handle = win32api.MonitorFromWindow(window_handle, win32con.MONITOR_DEFAULTTONEAREST)
-    return monitor_handle
-
-def get_screen_dimensions_for_monitor(monitor_handle):
-    try:
-        # Get monitor info
-        monitor_info = win32api.GetMonitorInfo(monitor_handle)
-
-        # Calculate the screen width and height
-        screen_width = monitor_info['Monitor'][2] - monitor_info['Monitor'][0]
-        screen_height = monitor_info['Monitor'][3] - monitor_info['Monitor'][1]
-
-        return screen_width, screen_height
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
 
 def capture_and_crop_window(window, lleft, ltop, lwidth, lheight) -> Optional[Any]:
     try:

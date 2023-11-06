@@ -87,3 +87,12 @@ def cal_distance(yx1: tuple, yx2: tuple):
     distance = math.sqrt(delta_y ** 2 + delta_x ** 2)
 
     return distance
+
+
+def process_active(pid: int or str) -> bool:
+    try:
+        process = psutil.Process(pid)
+    except psutil.Error as error:  # includes NoSuchProcess error
+        return False
+    if psutil.pid_exists(pid) and process.status() == psutil.STATUS_RUNNING:
+        return True

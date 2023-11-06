@@ -2,45 +2,21 @@ import atexit
 import os
 import signal
 import sys
-from typing import List, Set, Optional, Tuple
+from typing import List, Set, Tuple
 import threading
 
-import psutil
 from PyQt5.QtWidgets import QApplication, QAction
 from pygetwindow import Win32Window
 
-import root_config
 import twnzui.windows
-from pocketbase import PocketBase
 
 from twnzbot.instances import NostyBotInstance
 from twnzlib import *
-import twnzui as ui
+from twnzlib import process_active
 from twnzui.instances import NosTaleWinInstance, BotWinInstance
-from twnzui.login_form import LoginResult
 from twnzui.tray import NostyTray
-from twnzui.windows import Locator
-from twnzui.windows import show_win_with_small_delay
-
-
-def run_login_block_and_exit_if_failed(app: QApplication):
-    out = LoginResult()
-    pb = PocketBase(root_config.PB_URL)
-    login_ui = ui.LoginApplication(pb, out)
-    login_ui.show()
-    app.exec_()
-    app.exit(0)
-    if not out.success:
-        exit(0)
-
-
-def process_active(pid: int or str) -> bool:
-    try:
-        process = psutil.Process(pid)
-    except psutil.Error as error:  # includes NoSuchProcess error
-        return False
-    if psutil.pid_exists(pid) and process.status() == psutil.STATUS_RUNNING:
-        return True
+from twnzui.locator import Locator
+from twnzui.indy_utils import show_win_with_small_delay
 
 
 class NostyInstanceManager:
