@@ -9,8 +9,8 @@ import requests
 import win32gui
 from pywinctl._pywinctl_win import Win32Window
 
-from twnz.win.const import TEMP_PNG, NAME, LEVEL, HAYSTACK_PATH
-from twnz.win.basic import get_screen_dimensions_for_monitor, get_monitor_from_window, get_monitor_info
+from twnz.win.const import TEMP_PNG, NAME, LEVEL, HAYSTACK_PATH, BOT_STATUS_TEMP_PNG
+from twnz.win.basic import get_monitor_from_window, get_monitor_info
 from twnz.win.bridge import show_win_with_small_delay_if_not_already
 
 
@@ -71,6 +71,21 @@ class Locator(Enum):
         return rect
 
 
+def ocr_bot_status_img_to_text(url: str="https://tesseract-server.hop.sh/tesseract"):
+    fname = BOT_STATUS_TEMP_PNG
+    files = {
+        'file': (fname, open(fname, 'rb')),
+    }
+    data = {
+        'options': '{"languages":["eng"], "dpi": 119, "pageSegmentationMethod": 7, "ocrEngineMode": 0, "configParams": {"classify_enable_learning": "0", "classify_enable_adaptive_matcher": "0"}}'
+    }
+
+    response = requests.post(url, files=files, data=data)
+    print(response.text)
+    stdout = json.loads(response.text)['data']['stdout'].strip()
+    return stdout
+
+
 def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop.sh/tesseract"):
     # psm = 8 if prefix == LEVEL else 3
     # dpi = 120 if prefix == LEVEL else 70
@@ -123,9 +138,6 @@ def capture_and_crop_window(window, lleft, ltop, lwidth, lheight, save_now=False
             print(bb)
             mss.tools.to_png(im.rgb, im.size, output=("mss"+TEMP_PNG))
             screenshot = Image.open("mss"+TEMP_PNG)
-
-        # screenshot = pyautogui.screenshot(
-        #     region=(gleft, gtop, gright - gleft, gbottom - gtop))
 
         if screenshot is not None and save_now:
             screenshot.save(target_path)
