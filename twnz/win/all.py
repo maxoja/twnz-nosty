@@ -44,7 +44,10 @@ def is_window_partially_visible_on_monitor(target_window_handle: int, monitor_ha
         print('window not found')
         return False  # Window not found
 
-    target_rect_ltrb = win32gui.GetWindowRect(target_window_handle)
+    try:
+        target_rect_ltrb = win32gui.GetWindowRect(target_window_handle)
+    except:
+        return False
     target_rect_ltrb = (
         target_rect_ltrb[0] - monitor_rect_ltrb[0],
         target_rect_ltrb[1] - monitor_rect_ltrb[1],
