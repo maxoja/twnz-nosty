@@ -92,13 +92,11 @@ def on_exit_unlock():
 
 class NostyInstanceManager:
     def __init__(self):
-        self.pbot_checked_once: Set[BotWinInstance] = set()
         self.instances: List[NostyBotInstance] = []
 
     def create_all(self):
         # find all nostale wins if start first time
         phoenix_wins = BotWinInstance.get_all()
-        self.pbot_checked_once.update(phoenix_wins)
         ready_phoenix_wins = [p for p in phoenix_wins if p.ready_to_match()]
         self.instances = match_v3(ready_phoenix_wins)
 
@@ -106,9 +104,8 @@ class NostyInstanceManager:
         return [i.bot_win for i in self.instances]
 
     def __find_new_pbot_wins(self):
-        # pbot that's not matched and not checked
-        bot_win_handles = [p.window_handle for p in self.pbot_checked_once]
-        return BotWinInstance.get_all(handle_blacklist=bot_win_handles)
+        bot_win_handles = [n.bot_win.window_handle for n in self.instances]
+        return BotWinInstance.get_all_that_is_ready(handle_blacklist=bot_win_handles)
 
     def __find_unmatched_game_wins(self) -> List[Win32Window]:
         current_game_handles = [n.game_win.window_handle for n in self.instances]
@@ -131,36 +128,10 @@ class NostyInstanceManager:
         new_pbots = self.__find_new_pbot_wins()
         if len(new_pbots) == 0:
             return []
-        self.pbot_checked_once.update(new_pbots)
+        # self.pbot_checked_once.update(new_pbots)
         new_matches = match_v3(new_pbots)
         self.instances.extend(new_matches)
         return new_matches
-
-    def find_active_game_and_try_match_with_leftover_pbot_update_n_return(self) -> Optional[NostyBotInstance]:
-        # for left-over phoenix bot that can't initially matched with nostale win
-        # try to rematch it with unmateched nostale win that's currently active
-        matched_pbots = self.__get_matched_pbots()
-        pbots_to_match = [p for p in self.pbot_checked_once if p not in matched_pbots and p.ready_to_match()]
-
-        if len(pbots_to_match) == 0:
-            return None
-
-        foreground_game_win = self.__find_fground_game_win()
-
-        if foreground_game_win is None:
-            return None
-        matched_game_win_handles = [i.game_win.window_handle for i in self.instances]
-        if foreground_game_win.getHandle() in matched_game_win_handles:
-            return None
-        if not game_win_matchable(foreground_game_win):
-            return None
-
-        # we now have unmatched pbot with active game that's matchable and not yet matched
-        best_pbot_ins = find_best_pbot_win_for_game_win(foreground_game_win, pbots_to_match)
-        fg_game_ins = NosTaleWinInstance(foreground_game_win.getHandle())
-        new_nosty = NostyBotInstance(fg_game_ins, best_pbot_ins)
-        self.instances.append(new_nosty)
-        return new_nosty
 
     def close_n_cleanup_instances(self, to_close: [NostyBotInstance]):
         # TODO remove dead pbot instance from pbot_checked_once, bc it's possible for window handle could get reused
@@ -168,7 +139,7 @@ class NostyInstanceManager:
             n.on_stop_nosty()
             n.ctrl_win.hide()
             n.api.close()
-            self.pbot_checked_once.remove(n.bot_win)
+            # self.pbot_checked_once.remove(n.bot_win)
             self.instances.remove(n)
 
     def close_all(self):

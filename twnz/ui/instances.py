@@ -39,8 +39,8 @@ class BotWinInstance:
         return [BotWinInstance(w.getHandle()) for w in windows if w.getHandle() not in handle_blacklist]
 
     @staticmethod
-    def get_all_that_is_ready():
-        return [r for r in BotWinInstance.get_all() if r.ready_to_match()]
+    def get_all_that_is_ready(handle_blacklist: Optional[List[int]]=None):
+        return [r for r in BotWinInstance.get_all(handle_blacklist) if r.ready_to_match()]
 
     def ready_to_match(self):
         return self.get_player_level() != 0

@@ -58,7 +58,6 @@ if __name__ == "__main__":
         app.exit(0)
         sys.exit(0)
 
-
     # run_login_block_and_exit_if_failed(app)
 
     print('started tray thread')
@@ -89,10 +88,6 @@ if __name__ == "__main__":
             sleep(1)
 
         more_nosties = nim.find_n_try_match_new_pbot_wins_update_return()
-        if len(more_nosties) == 0:
-            new_nosty = nim.find_active_game_and_try_match_with_leftover_pbot_update_n_return()
-            if new_nosty is not None:
-                more_nosties = [new_nosty]
 
         for n in more_nosties:
             n.ctrl_win.show()
