@@ -44,7 +44,7 @@ if __name__ == "__main__":
         box.show()
         app.exec_()
         app.exit(0)
-        exit(0)
+        sys.exit(0)
 
     # run_login_block_and_exit_if_failed(app)
 
