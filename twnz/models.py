@@ -75,6 +75,54 @@ class PlayerEntity:
         return f"Player Entity: Champion Level: {self.champion_level}, Family: {self.family}, HP Percent: {self.hp_percent}, ID: {self.id}, Level: {self.level}, MP Percent: {self.mp_percent}, Name: {self.name}, X: {self.x}, Y: {self.y}"
 
 
+class PlayerInfo:
+    def __init__(self, champion_level, hp_percent, id, is_resting, level, map_id, mp_percent, name, x, y):
+        self.champion_level = champion_level
+        self.hp_percent = hp_percent
+        self.id = id
+        self.is_resting = is_resting
+        self.level = level
+        self.map_id = map_id
+        self.mp_percent = mp_percent
+        self.name = name
+        self.x = x
+        self.y = y
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            data['champion_level'],
+            data['hp_percent'],
+            data['id'],
+            data['is_resting'],
+            data['level'],
+            data['map_id'],
+            data['mp_percent'],
+            data['name'],
+            data['x'],
+            data['y']
+        )
+
+    def to_dict(self):
+        return {
+            'champion_level': self.champion_level,
+            'hp_percent': self.hp_percent,
+            'id': self.id,
+            'is_resting': self.is_resting,
+            'level': self.level,
+            'map_id': self.map_id,
+            'mp_percent': self.mp_percent,
+            'name': self.name,
+            'x': self.x,
+            'y': self.y
+        }
+
+    def __str__(self):
+        return f"PlayerInfo(champion_level={self.champion_level}, hp_percent={self.hp_percent}, id={self.id}, " \
+               f"is_resting={self.is_resting}, level={self.level}, map_id={self.map_id}, mp_percent={self.mp_percent}, " \
+               f"name='{self.name}', x={self.x}, y={self.y})"
+
+
 if __name__ == '__main__':
     json_data = {
         'items': [{'id': 2527585, 'name': 'Gold', 'owner_id': 62426, 'quantity': 125, 'vnum': 1046, 'x': 14, 'y': 199}],

@@ -1,23 +1,45 @@
 from phoenixapi import phoenix
 from twnz.bot.enums import Mode
 from twnz.bot.models import NostyStates
+from twnz.ui.instances import BotWinInstance
 from twnz.ui.sticky import SmallWindow
 
 
 class NostyEmptyLogic:
-    def __init__(self, api: phoenix.Api, states: NostyStates, ctrl_win: SmallWindow):
+    def __init__(self, api: phoenix.Api, states: NostyStates, ctrl_win: SmallWindow, pbot_win: BotWinInstance):
         self.api = api
         self.states = states
         self.ctrl_win = ctrl_win
+        self.pbot_win = pbot_win
 
     def get_mode(self):
         return Mode.NONE
 
-    def on_start(self):
+    def on_prep_load(self):
         pass
 
-    def on_stop(self):
+    def on_load(self):
         pass
+
+    def on_start_clicked(self):
+        # when start button clicked
+        pass
+
+    def on_stop_clicked(self):
+        # when stop button clicked
+        pass
+
+    def on_start_external(self):
+        # when instance created or this logic mode was chosen
+        # use clicked action by default
+        # we don't really use this right now but will later
+        # that's because when you start bot or switch mode, nosty won't automatically kick it off
+        self.on_start_clicked()
+
+    def on_stop_external(self):
+        # when changed to different logic or nosty was killed
+        # use clicked action by default
+        self.on_stop_clicked()
 
     def on_tick(self, json_msg: dict):
         self.on_all_tick(json_msg)

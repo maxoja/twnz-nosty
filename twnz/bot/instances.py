@@ -14,19 +14,19 @@ from twnz.ui.instances import NosTaleWinInstance, BotWinInstance
 from twnz.ui.sticky import SmallWindow, update_small_windows_positions
 
 
-def get_logic_for_mode(m: enums.Mode, api: phoenix.Api, states: NostyStates, ctrl_win: SmallWindow):
+def get_logic_for_mode(m: enums.Mode, api: phoenix.Api, states: NostyStates, ctrl_win: SmallWindow, pbot_win: BotWinInstance):
     if m == enums.Mode.NONE:
-        return base.NostyEmptyLogic(api, states, ctrl_win)
+        return base.NostyEmptyLogic(api, states, ctrl_win, pbot_win)
     elif m == enums.Mode.PHOENIX:
-        return qol.NostyPhoenixLogic(api, states, ctrl_win)
+        return qol.NostyPhoenixLogic(api, states, ctrl_win, pbot_win)
     elif m == enums.Mode.BROKEN_GURI:
-        return more.NostyGuriLogic(api, states, ctrl_win)
+        return more.NostyGuriLogic(api, states, ctrl_win, pbot_win)
     elif m == enums.Mode.PICK_ITEMS_ONESHOT:
-        return more.NostyQuickHandLogic(api, states, ctrl_win)
+        return more.NostyQuickHandLogic(api, states, ctrl_win, pbot_win)
     elif m == enums.Mode.PICK_ITEMS_FOREVER:
-        return more.NostyQuickHandForeverLogic(api, states, ctrl_win)
+        return more.NostyQuickHandForeverLogic(api, states, ctrl_win, pbot_win)
     elif m == enums.Mode.EXPERIMENT:
-        return more.NostyExperimentLogic(api, states, ctrl_win)
+        return more.NostyExperimentLogic(api, states, ctrl_win, pbot_win)
     else:
         raise Exception("Undefined map for mode " + m)
 
@@ -40,21 +40,29 @@ class NostyBotInstance:
         self.api = phoenix.Api(bot_win.get_port())
         self.states = NostyStates()
         self.bind_ctrl()
-        self.load_logic(NostyStates.INITIAL_MODE)
+        self.load_logic__this_should_be_called_later(NostyStates.INITIAL_MODE)
         self.should_be_removed = False
 
     def bind_ctrl(self):
-        self.ctrl_win.start_cb = self.on_start
-        self.ctrl_win.stop_cb = self.on_stop
+        self.ctrl_win.start_cb = self.on_start_clicked
+        self.ctrl_win.stop_cb = self.on_stop_clicked
         self.ctrl_win.mode_cb = self.on_mode
 
-    def on_start(self):
+    def on_start_nosty(self):
         self.states.running = True
-        self.logic.on_start()
+        self.logic.on_start_external()
 
-    def on_stop(self):
+    def on_stop_nosty(self):
         self.states.running = False
-        self.logic.on_stop()
+        self.logic.on_stop_external()
+
+    def on_start_clicked(self):
+        self.states.running = True
+        self.logic.on_start_clicked()
+
+    def on_stop_clicked(self):
+        self.states.running = False
+        self.logic.on_stop_clicked()
 
     def render_stop_without_trigger(self):
         if self.ctrl_win.start:
@@ -64,14 +72,18 @@ class NostyBotInstance:
         prev_mode = self.states.mode
         self.states.mode = selected_mode
         if prev_mode != selected_mode:
-            self.on_stop()
+            self.on_stop_clicked()
             self.render_stop_without_trigger()
-            self.load_logic(selected_mode)
+            self.load_logic__this_should_be_called_later(selected_mode)
 
-    def load_logic(self, mode:Mode):
-        self.logic = get_logic_for_mode(mode, self.api, self.states, self.ctrl_win)
+    def load_logic__this_should_be_called_later(self, mode:Mode):
+        self.logic = get_logic_for_mode(mode, self.api, self.states, self.ctrl_win, self.bot_win)
+        self.logic.on_prep_load()
+        self.logic.on_load()
 
     def check_alive(self):
+        if not self.bot_win.ready_to_match():
+            return False
         try: win32gui.GetWindowRect(self.game_win.window_handle)
         except: return False
         try: win32gui.GetWindowRect(self.bot_win.window_handle)

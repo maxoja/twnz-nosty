@@ -8,36 +8,20 @@ import win32con
 import win32gui
 from pywinctl._pywinctl_win import Win32Window
 
-from twnz.win.basic import get_all_monitor_handles
+from twnz.win.bridge import show_win_with_small_delay_if_not_already
+from twnz.win.basic import get_all_monitor_handles, get_monitor_info, get_monitor_from_window, get_foreground_win, \
+    get_monitor_info_from_win_handle
 
 
-def show_win_with_small_delay(window:Win32Window):
-    win32gui.ShowWindow(window.getHandle(), win32con.SW_RESTORE)
-    pyautogui.press('alt')
-    win32gui.SetForegroundWindow(window.getHandle())
-    while not win32gui.IsWindowVisible(window.getHandle()):
-        pass
-    time.sleep(0.02)
-
-
-def get_monitor_from_window(window_handle):
-    monitor_handle = win32api.MonitorFromWindow(window_handle, win32con.MONITOR_DEFAULTTONEAREST)
-    return monitor_handle
-
-
-def get_screen_dimensions_for_monitor(monitor_handle):
-    try:
-        # Get monitor info
-        monitor_info = win32api.GetMonitorInfo(monitor_handle)
-
-        # Calculate the screen width and height
-        screen_width = monitor_info['Monitor'][2] - monitor_info['Monitor'][0]
-        screen_height = monitor_info['Monitor'][3] - monitor_info['Monitor'][1]
-
-        return screen_width, screen_height
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
+def show_and_move_win_to_middle(window: Win32Window):
+    monitor_info = get_monitor_info_from_win_handle(window.getHandle())
+    ml, mt, mr, mb = monitor_info['Monitor']
+    screen_width = mr - ml
+    screen_height = mb - mt
+    new_left = ml + screen_width // 2 - window.width // 2
+    new_top = mt + screen_height // 2 - window.height // 2
+    show_win_with_small_delay_if_not_already(window)
+    window.moveTo(new_left, new_top)
 
 
 def is_window_partially_visible(target_window_handle: int):

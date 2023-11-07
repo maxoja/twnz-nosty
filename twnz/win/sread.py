@@ -7,12 +7,9 @@ import requests
 import win32gui
 from pywinctl._pywinctl_win import Win32Window
 
-from twnz.win.all import show_win_with_small_delay, get_monitor_from_window, get_screen_dimensions_for_monitor
-
-TEMP_PNG = "eieitemp.png"
-NAME = "name"
-LEVEL = "level"
-HAYSTACK_PATH = 'haystacktemp.png'
+from twnz.win.const import TEMP_PNG, NAME, LEVEL, HAYSTACK_PATH
+from twnz.win.basic import get_screen_dimensions_for_monitor, get_monitor_from_window, get_monitor_info
+from twnz.win.bridge import show_win_with_small_delay_if_not_already
 
 
 class Locator(Enum):
@@ -20,6 +17,9 @@ class Locator(Enum):
     MP_LABEL = auto()
     NOSTALE_TITLE = auto()
     AVATAR_BALL = auto()
+    STATE_STOPPED = auto()
+    STATE_RUNNING = auto()
+    STATE_IDLE = auto()
 
     def get_img_path(self):
         if self == Locator.AVATAR_BALL:
@@ -30,21 +30,31 @@ class Locator(Enum):
             return 'src\\locator\\mp_label.png'
         if self == Locator.NOSTALE_TITLE:
             return 'src\\locator\\nostale_title.png'
+        if self == Locator.STATE_STOPPED:
+            return 'src\\locator\\state_stopped.png'
+        if self == Locator.STATE_RUNNING:
+            return 'src\\locator\\state_running.png'
+        if self == Locator.STATE_IDLE:
+            return 'src\\locator\\state_idle.png'
         else:
             raise Exception('undefined img path for enum ' + str(self.name))
 
-    def find_local_rect_on_window(self, win: Win32Window) -> Optional[Tuple[int, int, int, int]]:
-        show_win_with_small_delay(win)
-        l, t, r, b = win32gui.GetWindowRect(win.getHandle())
-        cropped = capture_and_crop_window(win, 0, 0, r-l, b-t)
-        if cropped == None:
+    def find_local_rect_on_window(self, win: Win32Window, local_ltwh: Tuple[int, int, int, int] = None) -> Optional[Tuple[int, int, int, int]]:
+        show_win_with_small_delay_if_not_already(win)
+        if local_ltwh is None:
+            l, t, r, b = win32gui.GetWindowRect(win.getHandle())
+            l, t, w, h = 0, 0, r-l, b-t
+        else:
+            l, t, w, h = local_ltwh
+
+        cropped = capture_and_crop_window(win, l, t, w, h, save_now=True, target_path=HAYSTACK_PATH)
+        if cropped is None:
             return None
-        cropped.save(HAYSTACK_PATH)
 
         try:
             result = pyautogui.locate(self.get_img_path(), HAYSTACK_PATH, grayscale=True)
-            if result is not None:
-                print('located', self, 'at', result, 'for', win.title)
+            # if result is not None:
+                # print('located', self, 'at', result, 'for', win.title)
             return result
         except pyautogui.ImageNotFoundException:
             return None
@@ -85,18 +95,19 @@ def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop
     return stdout
 
 
-def capture_and_crop_window(window, lleft, ltop, lwidth, lheight) -> Optional[Any]:
+def capture_and_crop_window(window, lleft, ltop, lwidth, lheight, save_now=False, target_path=TEMP_PNG) -> Optional[Any]:
     try:
         # Get the window's position and size
         win_x, win_y, win_width, win_height = window.left, window.top, window.width, window.height
         monitor_handle = get_monitor_from_window(window.getHandle())
-        swidth, sheight = get_screen_dimensions_for_monitor(monitor_handle)
+        monitor_info = get_monitor_info(monitor_handle)
+        ml, mt, mr, mb = monitor_info['Monitor']
 
         # Capture the window content and crop it
-        gleft = max(0, win_x + lleft)
-        gright = min(win_x + lleft + lwidth, swidth)
-        gtop = max(0, win_y + ltop)
-        gbottom = min(win_y + ltop + lheight, sheight)
+        gleft = max(ml, win_x + lleft)
+        gright = min(win_x + lleft + lwidth, mr)
+        gtop = max(ml, win_y + ltop)
+        gbottom = min(win_y + ltop + lheight, mb)
 
         if gright <= gleft or gbottom <= gtop:
             print("Invalid cropping dimensions.")
@@ -105,6 +116,8 @@ def capture_and_crop_window(window, lleft, ltop, lwidth, lheight) -> Optional[An
         screenshot = pyautogui.screenshot(
             region=(gleft, gtop, gright - gleft, gbottom - gtop))
 
+        if screenshot is not None and save_now:
+            screenshot.save(target_path)
         return screenshot
 
     except Exception as e:

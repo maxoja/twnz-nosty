@@ -14,7 +14,7 @@ from twnz import *
 from twnz import ui as ui
 from twnz.ui.login_form import LoginResult
 from twnz.ui.tray import NostyTray
-from twnz.win.all import show_win_with_small_delay
+from twnz.win.bridge import show_win_with_small_delay_if_not_already
 from twnz.win.basic import get_window_of_handle
 from twnz.managers import SingletonLocker, on_any_signal_unlock, on_exit_unlock, NostyInstanceManager
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         cb_map = dict()
 
         def wrap_select_player_cb(nosty: NostyBotInstance):
-            return lambda: show_win_with_small_delay(get_window_of_handle(nosty.game_win.window_handle))
+            return lambda: show_win_with_small_delay_if_not_already(get_window_of_handle(nosty.game_win.window_handle))
 
         for n in nim.instances:
             qact = QAction(n.bot_win.get_player_name(), n.ctrl_win, checkable=False)

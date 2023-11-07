@@ -9,7 +9,7 @@ import twnz
 from twnz import string_dist
 from twnz.bot.instances import NostyBotInstance
 from twnz.ui.instances import BotWinInstance, NosTaleWinInstance
-from twnz.ui.sread import Locator
+from twnz.win.sread import Locator
 
 from twnz.win.basic import process_active, get_game_windows, get_game_pid_from_bot_port, get_win_of_pid
 
@@ -92,6 +92,7 @@ class NostyInstanceManager:
         #     handle_blacklist=current_game_handles)
 
     def __find_fground_game_win(self) -> Optional[Win32Window]:
+        # TODO can be moved to win package
         try:
             fg_win = pywinctl.getActiveWindow()
             if "NosTale - (" in fg_win.title:
@@ -114,7 +115,7 @@ class NostyInstanceManager:
         # for left-over phoenix bot that can't initially matched with nostale win
         # try to rematch it with unmateched nostale win that's currently active
         matched_pbots = self.__get_matched_pbots()
-        pbots_to_match = [p for p in self.pbot_checked_once if p not in matched_pbots]
+        pbots_to_match = [p for p in self.pbot_checked_once if p not in matched_pbots and p.ready_to_match()]
 
         if len(pbots_to_match) == 0:
             return None
@@ -139,7 +140,7 @@ class NostyInstanceManager:
     def close_n_cleanup_instances(self, to_close: [NostyBotInstance]):
         # TODO remove dead pbot instance from pbot_checked_once, bc it's possible for window handle could get reused
         for n in to_close[::]:
-            n.on_stop()
+            n.on_stop_nosty()
             n.ctrl_win.hide()
             n.api.close()
             self.pbot_checked_once.remove(n.bot_win)

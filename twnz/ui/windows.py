@@ -3,13 +3,14 @@ from typing import List, Tuple
 from pywinctl._pywinctl_win import Win32Window
 
 from twnz.const import GAME_TITLE_POSTFIX, GAME_TITLE_PREFIX
-from twnz.ui.sread import temp_img_to_text, capture_and_crop_window
-from twnz.win.all import show_win_with_small_delay
+from twnz.win.const import LEVEL, TEMP_PNG, NAME
+from twnz.win.sread import temp_img_to_text, capture_and_crop_window
+from twnz.win.bridge import show_win_with_small_delay_if_not_already
 
 
 def get_game_windows_with_name_level_port(game_wins: List[Win32Window]) -> List[Tuple[Win32Window, str, str, int]]:
     for i, w in enumerate(game_wins):
-        show_win_with_small_delay(w)
+        show_win_with_small_delay_if_not_already(w)
         crop_player_level_img(w, i)
         crop_player_name_img(w, i)
 
