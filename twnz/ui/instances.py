@@ -83,6 +83,13 @@ class NosTaleWinInstance:
     def get_top(self):
         return self.get_left_top()[1]
 
+    def check_alive(self):
+        try:
+            win32gui.GetWindowRect(self.window_handle)
+            return True
+        except:
+            return False
+
     def __eq__(self, other):
         # assume other is of the same type
         return self.window_handle == other.window_handle

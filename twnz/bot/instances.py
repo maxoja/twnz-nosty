@@ -3,6 +3,7 @@ from typing import List
 
 import win32gui
 from PyQt5.QtWidgets import QAction
+from win32ctypes.pywin32 import pywintypes
 
 import twnz
 import twnz.win.all
@@ -91,11 +92,17 @@ class NostyBotInstance:
         return True
 
     def update(self, party_selector_actions: List[QAction]):
-        left, top, _, _ = self.game_win.get_rect()
-        visible = twnz.win.all.is_window_partially_visible(self.game_win.window_handle)
-        game_win_info = (left, top, self.game_win.get_title(), visible)
-        update_small_windows_positions([self.ctrl_win], [game_win_info], (110, 31))
-        self.ctrl_win.set_party_selector(party_selector_actions)
+        try:
+            left, top, _, _ = self.game_win.get_rect()
+            title = self.game_win.get_title()
+            visible = twnz.win.all.is_window_partially_visible(self.game_win.window_handle)
+            game_win_info = (left, top, title, visible)
+            update_small_windows_positions([self.ctrl_win], [game_win_info], (110, 31))
+            self.ctrl_win.set_party_selector(party_selector_actions)
+        except pywintypes.error as e:
+            print(e)
+            self.should_be_removed = True
+            return
 
     def instance_level_tick(self, json_msg: dict):
         type_num = json_msg["type"]
@@ -121,9 +128,14 @@ class NostyBotInstance:
 
         json_msg = json.loads(self.api.get_message())
 
-        # SECTION: always on
-        self.instance_level_tick(json_msg)
+        try:
+            # SECTION: always on
+            self.instance_level_tick(json_msg)
 
-        if not self.states.running:
+            if not self.states.running:
+                return
+            self.logic.on_tick(json_msg)
+        except pywintypes.error as e:
+            print(e)
+            self.should_be_removed = True
             return
-        self.logic.on_tick(json_msg)
