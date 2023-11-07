@@ -29,7 +29,8 @@ class NostyPhoenixLogic(NostyEmptyLogic):
         else:
             pass
         win_obj.moveTo(old_left, old_top)
-        show_win_with_small_delay_if_not_already(old_win)
+        if old_win is not None:
+            show_win_with_small_delay_if_not_already(old_win)
 
     def on_start_external(self):
         pass

@@ -38,13 +38,26 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     try:
-        SingletonLocker.lock()
-    except:
-        box = twnz.ui.misc.MessageBox("Nosty Bot is already running in the background")
+        if SingletonLocker.is_locked_for_other_process():
+            locked_by_pid = SingletonLocker.get_lock_content_pid()
+            # kill those processes
+            kill_process_tree(locked_by_pid)
+            # box = twnz.ui.misc.MessageBox("Nosty Bot is already running in the background (" + str(locked_by_pid) + ")")
+            # box.show()
+            # app.exec_()
+            # app.exit(0)
+        elif SingletonLocker.is_locked_for_this_process():
+            pass
+        else:
+            SingletonLocker.clear_lock_if_exist_and_lock()
+    except Exception as e:
+        s = "Nosty UI found issues when locking file" + "\n" + str(e)
+        box = twnz.ui.misc.MessageBox(s)
         box.show()
         app.exec_()
         app.exit(0)
         sys.exit(0)
+
 
     # run_login_block_and_exit_if_failed(app)
 
@@ -111,6 +124,7 @@ if __name__ == "__main__":
         nim.close_n_cleanup_instances(to_remove)
         app.processEvents()
     nim.close_all()
+    SingletonLocker.unlock_for_itself()
     app.exit(0)
     sys.exit(0)
     # sys.exit(app.exec_())

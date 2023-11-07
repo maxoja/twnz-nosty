@@ -1,7 +1,9 @@
 import json
 from enum import Enum, auto
 from typing import Optional, Tuple, Any
+from PIL import Image
 
+import mss.tools
 import pyautogui
 import requests
 import win32gui
@@ -101,6 +103,7 @@ def capture_and_crop_window(window, lleft, ltop, lwidth, lheight, save_now=False
         win_x, win_y, win_width, win_height = window.left, window.top, window.width, window.height
         monitor_handle = get_monitor_from_window(window.getHandle())
         monitor_info = get_monitor_info(monitor_handle)
+        # monitor_id = int(monitor_info['Device'].split('DISPLAY')[-1]) # Intentionally keep it as 1-based not 0-based
         ml, mt, mr, mb = monitor_info['Monitor']
 
         # Capture the window content and crop it
@@ -113,8 +116,16 @@ def capture_and_crop_window(window, lleft, ltop, lwidth, lheight, save_now=False
             print("Invalid cropping dimensions.")
             return None
 
-        screenshot = pyautogui.screenshot(
-            region=(gleft, gtop, gright - gleft, gbottom - gtop))
+        with mss.mss() as sct:
+            # mss_monitor = sct.monitors[monitor_id]
+            bb = (gleft, gtop, gright, gbottom)
+            im = sct.grab(bb)
+            print(bb)
+            mss.tools.to_png(im.rgb, im.size, output=("mss"+TEMP_PNG))
+            screenshot = Image.open("mss"+TEMP_PNG)
+
+        # screenshot = pyautogui.screenshot(
+        #     region=(gleft, gtop, gright - gleft, gbottom - gtop))
 
         if screenshot is not None and save_now:
             screenshot.save(target_path)

@@ -19,50 +19,75 @@ class SingletonLocker:
     is_locked = False
 
     @staticmethod
-    def lock():
+    def rm_lock_skip_if_not_there():
+        if not SingletonLocker.file_is_there():
+            return
+        os.remove(SingletonLocker.LOCK_FILE_NAME)
+
+    @staticmethod
+    def file_is_there():
+        if not os.path.exists(SingletonLocker.LOCK_FILE_NAME):
+            return False
+        if not os.path.isfile(SingletonLocker.LOCK_FILE_NAME):
+            return False
+        return True
+
+    @staticmethod
+    def get_lock_content_pid() -> Optional[str]:
+        if not SingletonLocker.file_is_there():
+            return None
         try:
-            file = open(SingletonLocker.LOCK_FILE_NAME, "x")
-            file.write(str(os.getpid()))
-            SingletonLocker.is_locked = True
-        except FileExistsError:
             with open(SingletonLocker.LOCK_FILE_NAME, "r") as f:
                 content = f.read()
                 lock_pid = int(content)
+                return lock_pid
+        except:
+            return None
 
-            if lock_pid == os.getpid():
-                print('redundant lock file, considered already correctly locked')
-                SingletonLocker.is_locked = True
-                return
-
-            if not process_active(lock_pid):
-                print('expired lock file, remove lock and relock')
-                os.remove(SingletonLocker.LOCK_FILE_NAME)
-                SingletonLocker.is_locked = False
-                NostyInstanceManager.lock()
-                return
-            print("Another instance of the program is already running.")
-            sys.exit(1)
 
     @staticmethod
-    def unlock():
-        if not SingletonLocker.is_locked:
+    def is_locked_for_other_process():
+        if not SingletonLocker.file_is_there():
+            return False
+        with open(SingletonLocker.LOCK_FILE_NAME, "r") as f:
+            content = f.read()
+            lock_pid = int(content)
+            return process_active(lock_pid)
+
+    @staticmethod
+    def is_locked_for_this_process():
+        if not SingletonLocker.file_is_there():
+            return False
+        with open(SingletonLocker.LOCK_FILE_NAME, "r") as f:
+            content = f.read()
+            lock_pid = int(content)
+            return lock_pid == os.getpid()
+
+    @staticmethod
+    def clear_lock_if_exist_and_lock():
+        SingletonLocker.rm_lock_skip_if_not_there()
+        with open(SingletonLocker.LOCK_FILE_NAME, "x") as file:
+            file.write(str(os.getpid()))
+            SingletonLocker.is_locked_by_others = True
+
+    @staticmethod
+    def unlock_for_itself():
+        if not SingletonLocker.is_locked_for_this_process():
             return
-        if not os.path.exists(SingletonLocker.LOCK_FILE_NAME):
-            return
-        if not os.path.isfile(SingletonLocker.LOCK_FILE_NAME):
+        if not SingletonLocker.file_is_there():
             return
         os.remove(SingletonLocker.LOCK_FILE_NAME)
 
 
 def on_any_signal_unlock(signum, frame):
     # Handle the signal (e.g., clean up resources)
-    SingletonLocker.unlock()
+    SingletonLocker.unlock_for_itself()
     sys.exit(1)
 
 
 def on_exit_unlock():
     # Handle program exit (e.g., clean up resources)
-    SingletonLocker.unlock()
+    SingletonLocker.unlock_for_itself()
 
 
 class NostyInstanceManager:
