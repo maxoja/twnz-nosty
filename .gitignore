@@ -240,3 +240,5 @@ sandbox*
 /haystacktemp.png
 /my_program.lock
 /pyarmor-regfile-4315.zip
+/dist-zip/
+/.pyarmor/

@@ -5,7 +5,6 @@ from twnz import config
 
 cred_path = path.join(config.RESOURCE_FOLDER, config.CRED_FILE)
 
-
 def save_cred(email: str, password: str, remember: bool):
     obj = {'email': email, 'password': password, 'remember': remember}
     with open(cred_path, 'wb') as file:
