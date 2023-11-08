@@ -5,7 +5,6 @@ import threading
 
 from PyQt5.QtWidgets import QApplication, QAction
 
-import root_config
 import twnz
 from pocketbase import PocketBase
 
@@ -38,8 +37,7 @@ def show_exit_popup_and_exit_if_not_running_as_admin(app: QApplication):
         app.exit(0)
         sys.exit(0)
 
-
-if __name__ == "__main__":
+def start():
     signal.signal(signal.SIGINT, on_any_signal_unlock)
     signal.signal(signal.SIGTERM, on_any_signal_unlock)
     atexit.register(on_exit_unlock)

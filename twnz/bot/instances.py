@@ -7,7 +7,7 @@ from win32ctypes.pywin32 import pywintypes
 
 import twnz
 import twnz.win.all
-from phoenixapi import phoenix
+from twnz import phoenix
 from twnz.bot import enums, base, qol, more
 from twnz.bot.enums import Mode
 from twnz.bot.models import NostyStates

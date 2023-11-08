@@ -1,9 +1,8 @@
 from typing import Union
 
-from phoenixapi import phoenix
 import json
 from time import sleep
-from twnz import config
+from twnz import config, phoenix
 from twnz.models import MapEntity
 
 
