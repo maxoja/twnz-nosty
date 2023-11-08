@@ -1,3 +1,4 @@
+import ctypes
 from typing import Optional, Any, List
 
 import psutil
@@ -11,6 +12,12 @@ from pywinctl._pywinctl_win import Win32Window
 
 from twnz.const import PHOENIX_TITLE_INFIX, GAME_TITLE_PREFIX
 
+
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
 
 def get_window_of_handle(handle: int):
     for w in pwc.getAllWindows():

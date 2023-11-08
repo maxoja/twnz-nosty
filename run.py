@@ -1,6 +1,6 @@
+import sys
 import atexit
 import signal
-import sys
 import threading
 
 from PyQt5.QtWidgets import QApplication, QAction
@@ -15,7 +15,7 @@ from twnz import ui as ui
 from twnz.ui.login_form import LoginResult
 from twnz.ui.tray import NostyTray
 from twnz.win.bridge import show_win_with_small_delay_if_not_already
-from twnz.win.basic import get_window_of_handle
+from twnz.win.basic import get_window_of_handle, is_admin
 from twnz.managers import SingletonLocker, on_any_signal_unlock, on_exit_unlock, NostyInstanceManager
 
 
@@ -29,6 +29,15 @@ def run_login_block_and_exit_if_failed(app: QApplication):
     if not out.success:
         exit(0)
 
+def show_exit_popup_and_exit_if_not_running_as_admin(app: QApplication):
+    if not is_admin():
+        s = "Please 'Run as Admin' in order to have Nosty UI and bots running stably"
+        box = twnz.ui.misc.MessageBox(s)
+        box.show()
+        app.exec_()
+        app.exit(0)
+        sys.exit(0)
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, on_any_signal_unlock)
@@ -36,6 +45,7 @@ if __name__ == "__main__":
     atexit.register(on_exit_unlock)
 
     app = QApplication(sys.argv)
+    show_exit_popup_and_exit_if_not_running_as_admin(app)
 
     try:
         if SingletonLocker.is_locked_for_other_process():
