@@ -1,3 +1,4 @@
+import os
 import sys
 import atexit
 import signal
@@ -17,6 +18,7 @@ from twnz.win.bridge import show_win_with_small_delay_if_not_already
 from twnz.win.basic import get_window_of_handle, is_admin
 from twnz.managers import SingletonLocker, on_any_signal_unlock, on_exit_unlock, NostyInstanceManager
 
+break_main_loop = False
 
 def run_login_block_and_keep_retry(app: QApplication):
     out = LoginResult()
@@ -44,7 +46,6 @@ def start():
 
     app = QApplication(sys.argv)
     show_exit_popup_and_exit_if_not_running_as_admin(app)
-    run_login_block_and_keep_retry(app)
 
     try:
         if SingletonLocker.is_locked_for_other_process():
@@ -67,14 +68,13 @@ def start():
         app.exit(0)
         sys.exit(0)
 
-    # run_login_block_and_exit_if_failed(app)
-
+    run_login_block_and_keep_retry(app)
     print('started tray thread')
     nim = NostyInstanceManager()
 
-    break_main_loop = False
     def kill_them_all():
         global break_main_loop
+        print('kill clicked')
         break_main_loop = True
 
     def thread_func():
@@ -129,6 +129,7 @@ def start():
         app.processEvents()
     nim.close_all()
     SingletonLocker.unlock_for_itself()
+    kill_process_tree(os.getpid())
     app.exit(0)
     sys.exit(0)
     # sys.exit(app.exec_())
