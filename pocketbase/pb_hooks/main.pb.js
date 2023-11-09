@@ -2,7 +2,6 @@
 
 routerAdd("GET", "/hello/:name", (c) => {
     let name = c.pathParam("name")
-
     return c.json(200, { "message": "Hello " + name })
 })
 
@@ -13,13 +12,15 @@ routerAdd('GET', '/checkDevice/:userId/:deviceId', (c) => {
 
     const userId = c.pathParam(USER_ID)
     const deviceId = c.pathParam(DEVICE_ID)
+    console.log('userId', userId)
+    console.log('deviceId', deviceId)
     const deviceRecords = $app.dao().findRecordsByFilter(
         COL_DEVICES,
-        `userId = {:userId}`,
+        `userId={:userId}`,
         "-created", // sorting
         1, // limit
-        1, // offset
-        {'userId': userId}
+        0, // offset
+        {userId}
     )
 
     if (deviceRecords.length === 0) {
@@ -33,7 +34,7 @@ routerAdd('GET', '/checkDevice/:userId/:deviceId', (c) => {
     return c.json(200, {"registered": true, "authorized": false})
 })
 
-routerAdd('POST', '/registerDevice/:userId/:deviceId', (c) => {
+routerAdd('GET', '/registerDevice/:userId/:deviceId', (c) => {
     const COL_DEVICES = 'devices'
     const USER_ID = 'userId'
     const DEVICE_ID = 'deviceId'
@@ -45,7 +46,7 @@ routerAdd('POST', '/registerDevice/:userId/:deviceId', (c) => {
         `userId = {:userId}`,
         "-created", // sorting
         1, // limit
-        1, // offset
+        0, // offset
         {'userId': userId}
     )
 
