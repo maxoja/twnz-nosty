@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 from pocketbase import PocketBase  # Import PocketBase from your module
 
 from twnz.const import BASE_NOSTY_TITLE
-from twnz.pb import flows
+from twnz.pb import flows, devices
 from twnz import resource
 from twnz.ui.const import *
 from twnz.ui.banner import Hammy
@@ -14,6 +14,7 @@ from twnz.ui.frame import NostyFrame
 
 class LoginResult:
     def __init__(self):
+        self.checked = False
         self.success = False
 
 
@@ -88,15 +89,36 @@ class LoginApplication(NostyFrame):
             return
 
         auth_record = flows.login(self.pb_client, email, password)
-        if auth_record is None:
+        user_id = devices.get_user_id_after_logged_in(self.pb_client)
+        if auth_record is None or user_id is None:
             msg = ("Authentication Failed, please double-check your login details.\nContact admin if you're confident "
                    "you filled in the correct details")
             self.show_info("Failure", msg)
             return
 
+        device_authorized = devices.check_device_authorized(self.pb_client, user_id)
+        if not device_authorized:
+            already_registered = devices.check_already_has_a_registered_device(self.pb_client, user_id)
+            if already_registered:
+                msg = f"You can only run on 1 machine per account.\nYou can register another account, or contact admin"
+                self.show_info("Unregistered Device", msg)
+                return
+
+            success_registration = devices.register_new_device(self.pb_client, user_id)
+            if not success_registration:
+                msg = f"Failed to register your device.\nPlease contact admin"
+                self.show_info("Registering new device", msg)
+                return
+
         credits_left = flows.get_credits(self.pb_client)
+        active_features = flows.get_active_features(self.pb_client)
+        print(active_features)
         if credits_left > 0:
-            msg = (f"You logged in with {credits_left} credits left.\nBot program is starting.")
+            msg = f"You have {credits_left} credits in your account.\n\n"
+            msg += f"Active features enabled\n"
+            for f in active_features:
+                msg += "- " + str(f['display_name'])+"\n"
+            msg += f"\nNosty Bot is Starting"
             self.out.success = True
             self.show_info("Login Success", msg)
 

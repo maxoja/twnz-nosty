@@ -18,7 +18,7 @@ from twnz.win.basic import get_window_of_handle, is_admin
 from twnz.managers import SingletonLocker, on_any_signal_unlock, on_exit_unlock, NostyInstanceManager
 
 
-def run_login_block_and_exit_if_failed(app: QApplication):
+def run_login_block_and_keep_retry(app: QApplication):
     out = LoginResult()
     pb = PocketBase(root_config.PB_URL)
     login_ui = ui.LoginApplication(pb, out)
@@ -26,7 +26,7 @@ def run_login_block_and_exit_if_failed(app: QApplication):
     app.exec_()
     app.exit(0)
     if not out.success:
-        exit(0)
+        sys.exit(0)
 
 def show_exit_popup_and_exit_if_not_running_as_admin(app: QApplication):
     if not is_admin():
@@ -44,6 +44,7 @@ def start():
 
     app = QApplication(sys.argv)
     show_exit_popup_and_exit_if_not_running_as_admin(app)
+    run_login_block_and_keep_retry(app)
 
     try:
         if SingletonLocker.is_locked_for_other_process():
