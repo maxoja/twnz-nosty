@@ -68,7 +68,7 @@ def start():
         app.exit(0)
         sys.exit(0)
 
-    run_login_block_and_keep_retry(app)
+    # run_login_block_and_keep_retry(app)
     print('started tray thread')
     nim = NostyInstanceManager()
 
@@ -102,16 +102,15 @@ def start():
             n.ctrl_win.show()
 
         to_remove = []
-
         party_select_actions = []
         cb_map = dict()
 
-        def wrap_select_player_cb(nosty: NostyBotInstance):
-            return lambda: show_win_with_small_delay_if_not_already(get_window_of_handle(nosty.game_win.window_handle))
+        def wrap_select_player_cb(handle: int):
+            return lambda: show_win_with_small_delay_if_not_already(get_window_of_handle(handle))
 
         for n in nim.instances:
-            qact = QAction(n.bot_win.get_player_name(), n.ctrl_win, checkable=False)
-            qact.triggered.connect(wrap_select_player_cb(n))
+            qact = QAction(n.bot_win.get_player_name(), None, checkable=False)
+            qact.triggered.connect(wrap_select_player_cb(n.game_win.window_handle))
             party_select_actions.append(qact)
 
         # Standard processing and mark any dead instance
@@ -119,7 +118,9 @@ def start():
             if not n.check_alive():
                 to_remove.append(n)
                 continue
-            n.update(party_select_actions)
+            first_action = QAction("Phoenix", None, checkable=False)
+            first_action.triggered.connect(wrap_select_player_cb(n.bot_win.window_handle))
+            n.update([first_action] + party_select_actions)
             n.tick_entry()
             if n.should_be_removed:
                 to_remove.append(n)
