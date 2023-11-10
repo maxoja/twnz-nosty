@@ -6,6 +6,7 @@ import psutil
 
 
 def kill_process_tree(pid):
+    print('killing', pid)
     try:
         parent = psutil.Process(pid)
         children = parent.children(recursive=True)  # Get all child processes recursively.
