@@ -5,8 +5,7 @@ import win32gui
 from twnz import string_dist
 from twnz.bot.base import NostyEmptyLogic
 from twnz.bot.enums import Mode
-from twnz.ui.instances import BotWinInstance
-from twnz.win.all import show_and_move_win_to_middle
+from twnz.win.all import show_and_move_win_to_middle, get_z_ordered_windows
 from twnz.win.bridge import show_win_with_small_delay_if_not_already
 from twnz.win.basic import get_window_of_handle, get_foreground_win
 from twnz.win.const import BOT_STATUS_TEMP_PNG
@@ -18,15 +17,19 @@ class NostyPhoenixLogic(NostyEmptyLogic):
         return Mode.PHOENIX
 
     def on_prep_load(self):
+        window_handles_on_top_phoenix_z_ordered = get_z_ordered_windows()
+        for i,wh in enumerate(window_handles_on_top_phoenix_z_ordered):
+            if wh == self.pbot_win.window_handle:
+                window_handles_on_top_phoenix_z_ordered = window_handles_on_top_phoenix_z_ordered[:i][::-1]
+                break
+
         win_obj = get_window_of_handle(self.pbot_win.window_handle)
-        old_win = get_foreground_win()
         old_left, old_top = win_obj.left, win_obj.top
         show_and_move_win_to_middle(win_obj)
         w, h = 120, 25
         l, t = 0, win_obj.height - h
 
         # crop that
-        show_win_with_small_delay_if_not_already(win_obj)
         local_ltwh = (l, t, w, h)
         if local_ltwh is None:
             l, t, r, b = win32gui.GetWindowRect(win_obj.getHandle())
@@ -43,8 +46,10 @@ class NostyPhoenixLogic(NostyEmptyLogic):
 
         # move bot win back to its old place
         win_obj.moveTo(old_left, old_top)
-        if old_win is not None:
-            show_win_with_small_delay_if_not_already(old_win)
+
+        for wh in window_handles_on_top_phoenix_z_ordered:
+            ww = get_window_of_handle(wh)
+            show_win_with_small_delay_if_not_already(ww)
 
         state_text = ocr_bot_status_img_to_text()
 

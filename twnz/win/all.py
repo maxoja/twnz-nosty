@@ -1,8 +1,7 @@
 import ctypes
-import time
+from typing import List, Any
 
 import numpy as np
-import pyautogui
 import win32api
 import win32con
 import win32gui
@@ -10,7 +9,7 @@ from pywinctl._pywinctl_win import Win32Window
 
 from twnz.win.bridge import show_win_with_small_delay_if_not_already
 from twnz.win.basic import get_all_monitor_handles, get_monitor_info, get_monitor_from_window, get_foreground_win, \
-    get_monitor_info_from_win_handle
+    get_monitor_info_from_win_handle, get_window_of_handle
 
 
 def show_and_move_win_to_middle(window: Win32Window):
@@ -73,7 +72,7 @@ def is_window_partially_visible_on_monitor(target_window_handle: int, monitor_ha
     return np.any(screen_array)
 
 
-def get_z_ordered_windows():
+def get_z_ordered_windows() -> List[int]:
     '''Returns windows in z-order (top first)'''
     user32 = ctypes.windll.user32
     lst = []
@@ -87,6 +86,22 @@ def get_z_ordered_windows():
             break
         lst.append(next)
     lst = [ wh for wh in lst if win32gui.IsWindowVisible(wh) and not win32gui.IsIconic(wh) ]
+    return lst
+
+def get_z_ordered_windows_win_obj() -> List[Any]:
+    '''Returns windows in z-order (top first)'''
+    user32 = ctypes.windll.user32
+    lst = []
+    top = user32.GetTopWindow(None)
+    if not top:
+        return lst
+    lst.append(top)
+    while True:
+        next = user32.GetWindow(lst[-1], win32con.GW_HWNDNEXT)
+        if not next:
+            break
+        lst.append(next)
+    lst = [get_window_of_handle(wh) for wh in lst if win32gui.IsWindowVisible(wh) and not win32gui.IsIconic(wh)]
     return lst
 
 

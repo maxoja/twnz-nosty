@@ -43,13 +43,23 @@ class SmallWindow(QMainWindow):
         self.start_button.setStyleSheet('background: green; color: white; padding-bottom:2px;')
         self.rerender_start_button()
 
-        self.more_button = QPushButton('', self)
-        self.more_button.setFixedSize(16, 16)
-        self.more_button.setStyleSheet('background: grey; color: white; padding-bottom:2px;')
+        self.mode_button = QPushButton('', self)
+        self.mode_button.setFixedSize(16, 16)
+        self.mode_button.setStyleSheet('background: grey; color: white; padding-bottom:2px;')
+
+        self.nav_button = QPushButton(self)
+        self.nav_button.setText("")
+        self.nav_button.setFixedSize(16, 16)
+        self.nav_button.setStyleSheet('QPushButton {background: grey; color: white; padding-bottom:2px;};')
+        # self.nav_button.setStyleSheet('QPushButton::menu-indicator{ image: url(src/search_icon_tiny.png); background: grey; }; QPushButton {background: grey; color: white; padding-bottom:2px;};')
+
+        self.nav_actions = []
+        self.nav_menu = QMenu()
+        self.nav_button.setMenu(self.nav_menu)
 
         # Create a QMenu for the dropdown options
-        self.menu = QMenu()
-        self.main_actions = []
+        self.mode_menu = QMenu()
+        self.mode_actions = []
         for mode in twnz.bot.enums.Mode:
             if mode != twnz.bot.enums.Mode.PHOENIX:
                 # intentional for first free version
@@ -58,17 +68,17 @@ class SmallWindow(QMainWindow):
             option_action.triggered.connect(self.on_mode_selected)
             if mode == NostyStates.INITIAL_MODE:
                 option_action.setChecked(True)
-            self.main_actions.append(option_action)
-            self.menu.addAction(option_action)
-        self.party_selector_actions = []
-        self.more_button.setMenu(self.menu)
+            self.mode_actions.append(option_action)
+            self.mode_menu.addAction(option_action)
+        self.mode_button.setMenu(self.mode_menu)
 
         # Construct Layout
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)  # Set margin to 0 on all sides
         layout.setSpacing(0)  # Set spacing between widgets to 0
         layout.addWidget(self.start_button, alignment=Qt.AlignLeft)
-        layout.addWidget(self.more_button, alignment=Qt.AlignLeft)
+        layout.addWidget(self.mode_button, alignment=Qt.AlignLeft)
+        layout.addWidget(self.nav_button, alignment=Qt.AlignLeft)
         layout.addStretch()
         layout.addWidget(self.player_label, alignment=Qt.AlignRight)
 
@@ -77,14 +87,14 @@ class SmallWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
         self.start_button.clicked.connect(self.on_start_clicked)
-        self.more_button.clicked.connect(self.show_popup)
+        self.mode_button.clicked.connect(self.show_popup)
 
     def on_mode_selected(self):
         action = self.sender()
         mode = action.text()
 
-        if action in self.main_actions:
-            for menu_action in self.menu.actions():
+        if action in self.mode_actions:
+            for menu_action in self.mode_menu.actions():
                 if menu_action != action:
                     menu_action.setChecked(False)
             action.setChecked(True)
@@ -116,11 +126,11 @@ class SmallWindow(QMainWindow):
         self.start_button.setStyleSheet(ss)
 
     def set_party_selector(self, new_selector_actions: List[QAction]):
-        for a in self.party_selector_actions:
-            self.menu.removeAction(a)
-        self.party_selector_actions = new_selector_actions[::]
-        for a in self.party_selector_actions:
-            self.menu.addAction(a)
+        for a in self.nav_actions:
+            self.nav_menu.removeAction(a)
+        self.nav_actions = new_selector_actions[::]
+        for a in self.nav_actions:
+            self.nav_menu.addAction(a)
 
     def show_popup(self):
         return
