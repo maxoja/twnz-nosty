@@ -6,7 +6,7 @@ from twnz import print_map
 
 
 def find_walk_path_pruned(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple):
-    path_points = __find_walk_path(map_array, start_yx, dest_yx)
+    path_points = find_walk_path_granular(map_array, start_yx, dest_yx)
     return __simplify_path(path_points)
 
 
@@ -22,8 +22,14 @@ def __debug_path_finding(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple,
     print('start', start_yx, 'dest', dest_yx)
 
 
-def __find_walk_path(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple) -> [tuple]:
-    __debug_path_finding(map_array, start_yx, dest_yx, [])
+def is_walkable(map_array: np.ndarray, y:int, x:int):
+    rows, cols = len(map_array), len(map_array[0])
+    return 0 <= x < cols and 0 <= y < rows and map_array[y][x] == 1
+
+
+def find_walk_path_granular(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple) -> [tuple]:
+    print('finding walk path')
+    # __debug_path_finding(map_array, start_yx, dest_yx, [])
 
     # Define possible movement directions (up, down, left, right).
     dir_yx_deltas = [(1, 0), (-1, 0), (0, 1), (0, -1)]
@@ -56,7 +62,7 @@ def __find_walk_path(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple) -> 
         for dy, dx in dir_yx_deltas:
             new_y, new_x = y + dy, x + dx
 
-            if not new_y in range(rows) or not new_x in range(cols):
+            if new_y not in range(rows) or new_x not in range(cols):
                 continue
             if map_array[new_y][new_x] == 0:
                 continue
@@ -75,7 +81,8 @@ def __find_walk_path(map_array: np.ndarray, start_yx: tuple, dest_yx: tuple) -> 
     path.append(start_yx)
     path = path[::-1] # this returns None
 
-    __debug_path_finding(map_array, start_yx, dest_yx, path)
+    # __debug_path_finding(map_array, start_yx, dest_yx, path)
+    print('finish finding walk path')
     return path
 
 
@@ -126,7 +133,7 @@ if __name__ == "__main__":
     starting_point = (0, 0)
     end_point = (3, 4)
 
-    path = __find_walk_path(map_array, starting_point, end_point)
+    path = find_walk_path_granular(map_array, starting_point, end_point)
     print('path of map')
     print('\n'.join(str(row) for row in map_array))
     print(path)

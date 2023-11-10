@@ -12,17 +12,14 @@ __feature_to_modes_map = {
     Feature.GOD: admin_features,
     Feature.BASE: [Mode.PHOENIX],
     Feature.DOWSING_LOCATOR: [Mode.DOWSING_LOCATOR],
-    Feature.PEAS_PICKER: [Mode.PICK_ITEMS_ONESHOT, Mode.PICK_ITEMS_FOREVER]
+    # Feature.ITEM_PICKER: [Mode.PICK_ITEMS_ONESHOT, Mode.PICK_ITEMS_FOREVER],
+    Feature.ITEM_PICKER: [Mode.PICK_ITEMS_FOREVER],
 }
 
 __mode_to_logic_map = {
     Mode.NONE: NostyEmptyLogic,
     Mode.PHOENIX: NostyPhoenixLogic,
     Mode.DOWSING_LOCATOR: NostyGuriLogic,
-    Mode.PICK_PEAS_FOREVER: NostyQuickHandForeverLogic,
-    Mode.PICK_PEAS_ONESHOT: NostyQuickHandLogic,
-
-    Mode.BROKEN_GURI: NostyGuriLogic,
     Mode.PICK_ITEMS_ONESHOT: NostyQuickHandLogic,
     Mode.PICK_ITEMS_FOREVER: NostyQuickHandForeverLogic,
 }
