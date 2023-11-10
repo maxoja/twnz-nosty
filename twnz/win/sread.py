@@ -1,14 +1,16 @@
 import json
 from enum import Enum, auto
 from typing import Optional, Tuple, Any
+from PIL import Image
 
+import mss.tools
 import pyautogui
 import requests
 import win32gui
 from pywinctl._pywinctl_win import Win32Window
 
-from twnz.win.const import TEMP_PNG, NAME, LEVEL, HAYSTACK_PATH
-from twnz.win.basic import get_screen_dimensions_for_monitor, get_monitor_from_window, get_monitor_info
+from twnz.win.const import TEMP_PNG, NAME, LEVEL, HAYSTACK_PATH, BOT_STATUS_TEMP_PNG
+from twnz.win.basic import get_monitor_from_window, get_monitor_info
 from twnz.win.bridge import show_win_with_small_delay_if_not_already
 
 
@@ -69,6 +71,21 @@ class Locator(Enum):
         return rect
 
 
+def ocr_bot_status_img_to_text(url: str="https://tesseract-server.hop.sh/tesseract"):
+    fname = BOT_STATUS_TEMP_PNG
+    files = {
+        'file': (fname, open(fname, 'rb')),
+    }
+    data = {
+        'options': '{"languages":["eng"], "dpi": 119, "pageSegmentationMethod": 7, "ocrEngineMode": 0, "configParams": {"classify_enable_learning": "0", "classify_enable_adaptive_matcher": "0"}}'
+    }
+
+    response = requests.post(url, files=files, data=data)
+    print(response.text)
+    stdout = json.loads(response.text)['data']['stdout'].strip()
+    return stdout
+
+
 def temp_img_to_text(prefix: str, i: int, url: str="https://tesseract-server.hop.sh/tesseract"):
     # psm = 8 if prefix == LEVEL else 3
     # dpi = 120 if prefix == LEVEL else 70
@@ -101,6 +118,7 @@ def capture_and_crop_window(window, lleft, ltop, lwidth, lheight, save_now=False
         win_x, win_y, win_width, win_height = window.left, window.top, window.width, window.height
         monitor_handle = get_monitor_from_window(window.getHandle())
         monitor_info = get_monitor_info(monitor_handle)
+        # monitor_id = int(monitor_info['Device'].split('DISPLAY')[-1]) # Intentionally keep it as 1-based not 0-based
         ml, mt, mr, mb = monitor_info['Monitor']
 
         # Capture the window content and crop it
@@ -113,8 +131,13 @@ def capture_and_crop_window(window, lleft, ltop, lwidth, lheight, save_now=False
             print("Invalid cropping dimensions.")
             return None
 
-        screenshot = pyautogui.screenshot(
-            region=(gleft, gtop, gright - gleft, gbottom - gtop))
+        with mss.mss() as sct:
+            # mss_monitor = sct.monitors[monitor_id]
+            bb = (gleft, gtop, gright, gbottom)
+            im = sct.grab(bb)
+            print(bb)
+            mss.tools.to_png(im.rgb, im.size, output=("mss"+TEMP_PNG))
+            screenshot = Image.open("mss"+TEMP_PNG)
 
         if screenshot is not None and save_now:
             screenshot.save(target_path)

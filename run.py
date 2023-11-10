@@ -1,6 +1,6 @@
+import sys
 import atexit
 import signal
-import sys
 import threading
 
 from PyQt5.QtWidgets import QApplication, QAction
@@ -15,7 +15,7 @@ from twnz import ui as ui
 from twnz.ui.login_form import LoginResult
 from twnz.ui.tray import NostyTray
 from twnz.win.bridge import show_win_with_small_delay_if_not_already
-from twnz.win.basic import get_window_of_handle
+from twnz.win.basic import get_window_of_handle, is_admin
 from twnz.managers import SingletonLocker, on_any_signal_unlock, on_exit_unlock, NostyInstanceManager
 
 
@@ -29,6 +29,15 @@ def run_login_block_and_exit_if_failed(app: QApplication):
     if not out.success:
         exit(0)
 
+def show_exit_popup_and_exit_if_not_running_as_admin(app: QApplication):
+    if not is_admin():
+        s = "Please 'Run as Admin' in order to have Nosty UI and bots running stably"
+        box = twnz.ui.misc.MessageBox(s)
+        box.show()
+        app.exec_()
+        app.exit(0)
+        sys.exit(0)
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, on_any_signal_unlock)
@@ -36,11 +45,24 @@ if __name__ == "__main__":
     atexit.register(on_exit_unlock)
 
     app = QApplication(sys.argv)
+    show_exit_popup_and_exit_if_not_running_as_admin(app)
 
     try:
-        SingletonLocker.lock()
-    except:
-        box = twnz.ui.misc.MessageBox("Nosty Bot is already running in the background")
+        if SingletonLocker.is_locked_for_other_process():
+            locked_by_pid = SingletonLocker.get_lock_content_pid()
+            # kill those processes
+            kill_process_tree(locked_by_pid)
+            # box = twnz.ui.misc.MessageBox("Nosty Bot is already running in the background (" + str(locked_by_pid) + ")")
+            # box.show()
+            # app.exec_()
+            # app.exit(0)
+        elif SingletonLocker.is_locked_for_this_process():
+            pass
+        else:
+            SingletonLocker.clear_lock_if_exist_and_lock()
+    except Exception as e:
+        s = "Nosty UI found issues when locking file" + "\n" + str(e)
+        box = twnz.ui.misc.MessageBox(s)
         box.show()
         app.exec_()
         app.exit(0)
@@ -76,10 +98,6 @@ if __name__ == "__main__":
             sleep(1)
 
         more_nosties = nim.find_n_try_match_new_pbot_wins_update_return()
-        if len(more_nosties) == 0:
-            new_nosty = nim.find_active_game_and_try_match_with_leftover_pbot_update_n_return()
-            if new_nosty is not None:
-                more_nosties = [new_nosty]
 
         for n in more_nosties:
             n.ctrl_win.show()
@@ -111,6 +129,7 @@ if __name__ == "__main__":
         nim.close_n_cleanup_instances(to_remove)
         app.processEvents()
     nim.close_all()
+    SingletonLocker.unlock_for_itself()
     app.exit(0)
     sys.exit(0)
     # sys.exit(app.exec_())

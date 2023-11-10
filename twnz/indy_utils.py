@@ -2,6 +2,22 @@ import math
 
 import numpy as np
 
+import psutil
+
+
+def kill_process_tree(pid):
+    try:
+        parent = psutil.Process(pid)
+        children = parent.children(recursive=True)  # Get all child processes recursively.
+        for child in children:
+            child.terminate()  # Terminate child processes.
+        parent.terminate()  # Terminate the parent process.
+        parent.wait()  # Wait for the parent process to finish.
+    except psutil.NoSuchProcess:
+        print(f"Process with PID {pid} not found.")
+    except psutil.AccessDenied:
+        print(f"Access denied. You may need administrative privileges to terminate the process.")
+
 
 def string_dist(s1, s2):
     # also called levenshtein_distance

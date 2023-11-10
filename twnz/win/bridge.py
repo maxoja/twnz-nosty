@@ -11,6 +11,9 @@ from twnz.win.basic import get_foreground_win
 
 def show_win_with_small_delay_if_not_already(window:Win32Window):
     # this function was optimised from 0.11 to 0.0005
+    # this method doesn't handle None
+    if window is None:
+        return
     current_fground_win = get_foreground_win()
     if current_fground_win is not None and window.getHandle() == current_fground_win.getHandle():
         return

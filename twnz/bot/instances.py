@@ -139,3 +139,8 @@ class NostyBotInstance:
             print(e)
             self.should_be_removed = True
             return
+        except IndexError as e:
+            # from get_player_level
+            print(e)
+            self.should_be_removed = True
+            return
