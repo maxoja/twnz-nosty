@@ -3,10 +3,9 @@ import time
 from typing import Optional, List
 
 import twnz.bot.base
-from phoenixapi import phoenix
 from twnz.bot.enums import Mode
 from twnz import fetch_current_y_x_map_id, image_to_binary_array, walk_to, find_intersection_xy, fetch_map_entities, \
-    fetch_player_info, cal_distance
+    fetch_player_info, cal_distance, phoenix
 from twnz.models import ItemEntity
 
 

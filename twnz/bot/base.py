@@ -1,4 +1,4 @@
-from phoenixapi import phoenix
+from twnz import phoenix
 from twnz.bot.enums import Mode
 from twnz.bot.models import NostyStates
 from twnz.ui.instances import BotWinInstance
