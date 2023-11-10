@@ -3,7 +3,6 @@ import time
 from typing import Optional, List
 
 import twnz.bot.base
-from twnz.bot.enums import Mode
 from twnz import fetch_current_y_x_map_id, image_to_binary_array, walk_to, find_intersection_xy, fetch_map_entities, \
     fetch_player_info, cal_distance, phoenix
 from twnz.models import ItemEntity
@@ -17,11 +16,14 @@ def go_to_treasure(api: phoenix.Api, treasure_point_yx):
 
 
 class NostyGuriLogic(twnz.bot.base.NostyEmptyLogic):
-    def get_mode(self):
-        return Mode.BROKEN_GURI
-
-    def on_start(self):
+    def __init__(self, *args):
+        super(NostyGuriLogic, self).__init__(*args)
+        print('on init')
         self.guri_points = []
+
+    def on_start_clicked(self):
+        print('on_start')
+        pass
 
     def on_recv(self, head: str, tail: str):
         if head != 'hidn':
@@ -50,9 +52,6 @@ class NostyQuickHandLogic(twnz.bot.base.NostyEmptyLogic):
     DELAY_ACT = 0.15
     BUFFER_ACT = 0.05
     PICK_DIST = 2
-
-    def get_mode(self):
-        return Mode.PICK_ITEMS_ONESHOT
 
     def get_next_act_time(self):
         return time.time() + NostyQuickHandLogic.DELAY_ACT + random.random()*NostyQuickHandLogic.BUFFER_ACT
@@ -111,10 +110,8 @@ class NostyQuickHandLogic(twnz.bot.base.NostyEmptyLogic):
 
 class NostyQuickHandForeverLogic(NostyQuickHandLogic):
     # TODO 30 second cool down for picked item ignore
-    def get_mode(self):
-        return Mode.PICK_ITEMS_FOREVER
 
-    def on_start(self):
+    def on_start_clicked(self):
         print('on_start forever')
         self.next_act_allow = self.get_next_act_time()
         self.next_check_allow = time.time()
@@ -187,10 +184,8 @@ class NostyQuickHandForeverLogic(NostyQuickHandLogic):
 
 
 class NostyExperimentLogic(twnz.bot.base.NostyEmptyLogic):
-    def get_mode(self):
-        return Mode.EXPERIMENT
 
-    def on_start(self):
+    def on_start_clicked(self):
         pass
 
     def on_recv(self, head: str, tail: str):

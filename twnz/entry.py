@@ -3,6 +3,7 @@ import sys
 import atexit
 import signal
 import threading
+from typing import List
 
 from PyQt5.QtWidgets import QApplication, QAction
 
@@ -14,14 +15,28 @@ from twnz import *
 from twnz import ui as ui
 from twnz.ui.login_form import LoginResult
 from twnz.ui.tray import NostyTray
-from twnz.win.bridge import show_win_with_small_delay_if_not_already
-from twnz.win.basic import get_window_of_handle, is_admin
+from twnz.win.bridge import show_win_with_small_delay_if_not_already_handle
+from twnz.win.basic import is_admin
 from twnz.managers import SingletonLocker, on_any_signal_unlock, on_exit_unlock, NostyInstanceManager
 
 break_main_loop = False
 
-def run_login_block_and_keep_retry(app: QApplication):
+def run_login_block_and_keep_retry_return_features(app: QApplication) -> LoginResult:
+    """
+    {
+        'id': 'ajkidmhhypurg8s',
+        'created': datetime.datetime(2023, 11, 7, 12, 58, 25),
+        'updated': datetime.datetime(2023, 11, 9, 21, 46, 21),
+        'expand': {},
+        'collection_id': 'mh52duw5ximu762',
+        'collection_name': 'features',
+        'credit_cost_per_week': 2,
+        'display_name': 'Nosty Access with Navigation UI',
+        'enum_name': 'BASE'
+    }
+    """
     out = LoginResult()
+    out.god = False
     pb = PocketBase(root_config.PB_URL)
     login_ui = ui.LoginApplication(pb, out)
     login_ui.show()
@@ -29,6 +44,7 @@ def run_login_block_and_keep_retry(app: QApplication):
     app.exit(0)
     if not out.success:
         sys.exit(0)
+    return out
 
 def show_exit_popup_and_exit_if_not_running_as_admin(app: QApplication):
     if not is_admin():
@@ -68,9 +84,14 @@ def start():
         app.exit(0)
         sys.exit(0)
 
-    # run_login_block_and_keep_retry(app)
+    login_result = run_login_block_and_keep_retry_return_features(app)
+    print('Activated Features')
+    for f in login_result.features:
+        print('->', f.enum_name, '-', f.display_name)
+    print()
+
     print('started tray thread')
-    nim = NostyInstanceManager()
+    nim = NostyInstanceManager(login_result.features)
 
     def kill_them_all():
         global break_main_loop
@@ -106,7 +127,7 @@ def start():
         cb_map = dict()
 
         def wrap_select_player_cb(handle: int):
-            return lambda: show_win_with_small_delay_if_not_already(get_window_of_handle(handle))
+            return lambda: show_win_with_small_delay_if_not_already_handle(handle)
 
         for n in nim.instances:
             qact = QAction(n.bot_win.get_player_name(), None, checkable=False)
