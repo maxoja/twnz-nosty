@@ -173,6 +173,27 @@ class NostyQuickHandLogic(twnz.bot.base.NostyEmptyLogic):
             self.next_check_allow = time.time() + NostyQuickHandLogic.DELAY_CHECK
 
 
+class ItemObservation:
+    def __init__(self, item: ItemEntity, t: float):
+        self.item = item
+        self.t = t
+
+    def of_item(self, item: ItemEntity):
+        return self.item.id == item.id
+
+    def item_id(self):
+        return self.item.id
+
+    def outdated(self):
+        return time.time() - self.t >= 30
+
+    def is_in(self, observations: List):
+        for o in observations:
+            if self.of_item(o.item):
+                return True
+        return False
+
+
 class NostyQuickHandForeverLogic(NostyQuickHandLogic):
     # TODO 30 second cool down for picked item ignore
 
@@ -181,7 +202,6 @@ class NostyQuickHandForeverLogic(NostyQuickHandLogic):
         self.next_act_allow = self.get_next_act_time()
         self.next_check_allow = time.time()
         self.radius = 1000
-        self.act_queue = []
         self.next_item = None
         self.picked_items: List[ItemEntity] = []
         self.picked_items_check_time: Dict[int, float] = dict()
@@ -199,7 +219,13 @@ class NostyQuickHandForeverLogic(NostyQuickHandLogic):
         latest_map = fetch_map_entities(self.api)
         me = fetch_player_info(self.api)
         me_y, me_x = me['y'], me['x']
-        items_on_map = [i for i in latest_map.items if i.id != -1 and (i.owner_id in [0,-1, me['id']]) and i.id not in self.get_picked_ids_and_update()]
+        unpermitted_items = [i for i in latest_map.items if i.id != -1 and (i.owner_id not in [0,-1, me['id']])]
+        for i in unpermitted_items:
+            if i not in self.get_picked_ids_and_update():
+                self.picked_items.append(i)
+                self.picked_items_check_time[i.id] = time.time()
+        # items_on_map = [i for i in latest_map.items if i.id != -1 and (i.owner_id in [0,-1, me['id']]) and i.id not in self.get_picked_ids_and_update()]
+        items_on_map = [i for i in latest_map.items if i.id != -1 and i.id not in self.get_picked_ids_and_update()]
         def s(item: ItemEntity):
             return cal_distance((me_y, me_x), (item.y, item.x))
         items_on_map.sort(key=s)
