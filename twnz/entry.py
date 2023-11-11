@@ -72,6 +72,13 @@ def show_exit_popup_and_exit_if_not_running_as_admin(app: QApplication):
         sys.exit(0)
 
 def start():
+    try:
+        import pyi_splash
+        pyi_splash.update_text('UI Loaded ...')
+        pyi_splash.close()
+    except:
+        pass
+
     signal.signal(signal.SIGINT, on_any_signal_unlock)
     signal.signal(signal.SIGTERM, on_any_signal_unlock)
     atexit.register(on_exit_unlock)
@@ -129,6 +136,8 @@ def start():
     for n in nim.instances:
         n.ctrl_win.show()
 
+    time_check_matcher = TimeCheck(0.5)
+
     while True:
         if break_main_loop:
             print('breaking main loop')
@@ -136,7 +145,10 @@ def start():
         if len(nim.instances) == 0:
             sleep(1)
 
-        more_nosties = nim.find_n_try_match_new_pbot_wins_update_return()
+        if time_check_matcher.allow_and_reset():
+            more_nosties = nim.find_n_try_match_new_pbot_wins_update_return()
+        else:
+            more_nosties = []
 
         for n in more_nosties:
             n.ctrl_win.show()
