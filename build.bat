@@ -9,7 +9,7 @@ if exist .\dist rmdir /s /q .\dist
 if exist .\dist-zip rmdir /s /q .\dist-zip
 
 :: Build the executable using pyinstaller
-pyinstaller --onefile --noconsole -i"src\tray_icon.png" nosty_bot.py
+pyinstaller --onefile --noconsole --splash "src\banner2.png" -i"src\tray_icon.png" nosty_bot.py
 pyarmor gen -O obfdist --enable-jit --mix-str --assert-import --assert-call --obf-code 0 --pack dist/nosty_bot.exe nosty_bot.py
 
 :: Create the src directory in the dist folder
