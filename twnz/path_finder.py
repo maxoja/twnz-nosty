@@ -32,7 +32,7 @@ def find_walk_path_granular(map_array: np.ndarray, start_yx: tuple, dest_yx: tup
     # __debug_path_finding(map_array, start_yx, dest_yx, [])
 
     # Define possible movement directions (up, down, left, right).
-    dir_yx_deltas = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    dir_yx_deltas = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
 
     # Get the dimensions of the map array.
     rows, cols = len(map_array), len(map_array[0])
@@ -108,6 +108,50 @@ def __simplify_path(walking_path: [tuple]):
         prev_point = point
 
     return simplified_path
+
+from collections import deque
+
+def is_valid(y, x, rows, cols):
+    return 0 <= y < rows and 0 <= x < cols
+
+def find_nearest_walkable_cell(map_array, start_y, start_x):
+    rows = len(map_array)
+    cols = len(map_array[0])
+
+    # slap them back on map if out of bound
+    if start_y < 0:
+        start_y = 0
+    if start_y >= rows:
+        start_y = rows-1
+    if start_x < 0:
+        start_x = 0
+    if start_x >= cols:
+        start_x = cols-1
+
+    # Check if the starting point is already a walkable cell
+    if map_array[start_y][start_x] == 1:
+        return start_y, start_x
+
+    # Use BFS to explore the neighboring cells
+    queue = deque([(start_y, start_x)])
+    visited = set([(start_y, start_x)])
+
+    while queue:
+        current_y, current_x = queue.popleft()
+
+        # Check all 4 neighbors
+        for dy, dx in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            new_y, new_x = current_y + dy, current_x + dx
+
+            # Check if the new position is valid and not visited
+            if is_valid(new_y, new_x, rows, cols) and (new_y, new_x) not in visited:
+                if map_array[new_y][new_x] == 1:
+                    return new_y, new_x
+                queue.append((new_y, new_x))
+                visited.add((new_y, new_x))
+
+    # If no walkable cell is found, return None
+    return None
 
 
 # Example usage:

@@ -172,6 +172,9 @@ def update_small_windows_positions(small_windows: [SmallWindow], target_wins_inf
         w.move(x + offset[0], y + offset[1])
 
         # Show/hide the small window based on target window visibility
+        if is_visible is None:
+            return
+
         if is_visible:
             w.show()
         else:

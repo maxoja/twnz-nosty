@@ -2,7 +2,7 @@ from typing import Type, List
 
 from twnz.bot.base import NostyEmptyLogic
 from twnz.bot.enums import Mode, Feature
-from twnz.bot.more import NostyQuickHandForeverLogic, NostyQuickHandLogic, NostyGuriLogic
+from twnz.bot.more import NostyQuickHandForeverLogic, NostyGuriLogic
 from twnz.bot.qol import NostyPhoenixLogic
 
 
@@ -20,7 +20,6 @@ __mode_to_logic_map = {
     Mode.NONE: NostyEmptyLogic,
     Mode.PHOENIX: NostyPhoenixLogic,
     Mode.DOWSING_LOCATOR: NostyGuriLogic,
-    Mode.PICK_ITEMS_ONESHOT: NostyQuickHandLogic,
     Mode.PICK_ITEMS_FOREVER: NostyQuickHandForeverLogic,
 }
 

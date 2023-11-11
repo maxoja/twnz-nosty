@@ -1,4 +1,5 @@
 import math
+import time
 
 import numpy as np
 
@@ -64,3 +65,16 @@ def cal_distance(yx1: tuple, yx2: tuple):
     return distance
 
 
+class TimeCheck:
+    def __init__(self, cooldown: float, allow_now: bool=True):
+        self.cooldown = cooldown
+        self.next_allow = time.time() if allow_now else time.time() + cooldown
+
+    def reset(self):
+        self.next_allow = time.time() + self.cooldown
+
+    def allow_and_reset(self) -> bool:
+        if time.time() >= self.next_allow:
+            self.reset()
+            return True
+        return False

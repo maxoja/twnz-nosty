@@ -7,7 +7,7 @@ from win32ctypes.pywin32 import pywintypes
 
 import twnz
 import twnz.win.all
-from twnz import phoenix
+from twnz import phoenix, TimeCheck
 from twnz.bot import enums
 from twnz.bot.enums import Mode, Feature
 from twnz.bot.maps import feature_to_modes, mode_to_logic_class
@@ -42,6 +42,7 @@ class NostyBotInstance:
         self.bind_ctrl()
         self.load_logic__this_should_be_called_later(NostyStates.INITIAL_MODE)
         self.should_be_removed = False
+        self.time_check_visibility = TimeCheck(0.2)
 
     def bind_ctrl(self):
         self.ctrl_win.start_cb = self.on_start_clicked
@@ -82,19 +83,22 @@ class NostyBotInstance:
         self.logic.on_load()
 
     def check_alive(self):
-        if not self.bot_win.ready_to_match():
-            return False
         try: win32gui.GetWindowRect(self.game_win.window_handle)
         except: return False
         try: win32gui.GetWindowRect(self.bot_win.window_handle)
         except: return False
+        if not self.bot_win.ready_to_match():
+            return False
         return True
 
     def update(self, party_selector_actions: List[QAction]):
         try:
             left, top, _, _ = self.game_win.get_rect()
             title = self.game_win.get_title()
-            visible = twnz.win.all.is_window_partially_visible(self.game_win.window_handle)
+            if self.time_check_visibility.allow_and_reset():
+                visible = twnz.win.all.is_window_partially_visible(self.game_win.window_handle)
+            else:
+                visible = None
             game_win_info = (left, top, title, visible)
             update_small_windows_positions([self.ctrl_win], [game_win_info], (110, 31))
             self.ctrl_win.set_party_selector(party_selector_actions)
