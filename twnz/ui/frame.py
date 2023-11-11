@@ -1,3 +1,4 @@
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QMessageBox, QVBoxLayout
 from PyQt5.QtCore import Qt
 
@@ -40,6 +41,7 @@ class NostyFrame(QMainWindow):
         self.central_widget.setLayout(self.layout)
         self.setMinimumSize(self.layout.minimumSize())
         self.center()
+        self.setWindowIcon(QIcon('src/tray_icon.png'))
 
     def create_elems(self):
         pass

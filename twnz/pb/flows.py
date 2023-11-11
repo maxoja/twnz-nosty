@@ -9,6 +9,7 @@ from twnz.pb.models import FeatureModel
 COL_USERS = 'users'
 COL_CREDITS = 'credits'
 COL_FEATURES = 'features'
+COL_ANNOUNCEMENTS = 'announcements'
 
 
 def __users(pb: PocketBase):
@@ -21,6 +22,10 @@ def __features(pb: PocketBase):
 
 def __credits(pb: PocketBase):
     return pb.collection(COL_CREDITS)
+
+
+def __announcements(pb: PocketBase):
+    return pb.collection(COL_ANNOUNCEMENTS)
 
 
 def verify_email(pb: PocketBase, email: str):
@@ -48,6 +53,13 @@ def get_active_features(pb: PocketBase) -> List[FeatureModel]:
     for fid in feature_ids:
         feat = __features(pb).get_one(fid).__dict__
         result.append(FeatureModel.from_json(feat))
+    print(result)
+    return result
+
+
+def get_applicable_announcements(pb: PocketBase, this_client_count: int) -> List[str]:
+    lst = __announcements(pb).get_list(1, 20,{'filter': f'forCounterBelow > {this_client_count}'})
+    result = [i.__dict__['message'] for i in lst.items]
     print(result)
     return result
 

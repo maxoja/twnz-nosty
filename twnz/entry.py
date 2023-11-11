@@ -1,3 +1,4 @@
+import ctypes
 import os
 import sys
 import atexit
@@ -5,6 +6,7 @@ import signal
 import threading
 from typing import List
 
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QAction
 
 import twnz
@@ -13,6 +15,7 @@ from pocketbase import PocketBase
 from twnz.bot.instances import NostyBotInstance
 from twnz import *
 from twnz import ui as ui
+from twnz.pb.flows import get_applicable_announcements
 from twnz.ui.login_form import LoginResult
 from twnz.ui.tray import NostyTray
 from twnz.win.bridge import show_win_with_small_delay_if_not_already_handle
@@ -20,6 +23,18 @@ from twnz.win.basic import is_admin
 from twnz.managers import SingletonLocker, on_any_signal_unlock, on_exit_unlock, NostyInstanceManager
 
 break_main_loop = False
+
+
+def show_announcement_if_any(app: QApplication, pb: PocketBase):
+    announcement_counter = 0
+    messages = get_applicable_announcements(pb, announcement_counter)
+    if len(messages) == 0:
+        return
+    box = twnz.ui.misc.MessageBox("\n-------\n".join(messages), title_tail=" Announce")
+    box.show()
+    app.exec_()
+    app.exit(0)
+
 
 def run_login_block_and_keep_retry_return_features(app: QApplication) -> LoginResult:
     """
@@ -35,9 +50,10 @@ def run_login_block_and_keep_retry_return_features(app: QApplication) -> LoginRe
         'enum_name': 'BASE'
     }
     """
+    pb = PocketBase(root_config.PB_URL)
+    show_announcement_if_any(app, pb)
     out = LoginResult()
     out.god = False
-    pb = PocketBase(root_config.PB_URL)
     login_ui = ui.LoginApplication(pb, out)
     login_ui.show()
     app.exec_()
@@ -60,7 +76,10 @@ def start():
     signal.signal(signal.SIGTERM, on_any_signal_unlock)
     atexit.register(on_exit_unlock)
 
+    my_app_id = 'nosty-bot-app-id'  # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(my_app_id)
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon('src/tray_icon.png'))
     show_exit_popup_and_exit_if_not_running_as_admin(app)
 
     try:
