@@ -13,9 +13,6 @@ from twnz.win.sread import Locator, capture_and_crop_window, ocr_bot_status_img_
 
 
 class NostyPhoenixLogic(NostyEmptyLogic):
-    def get_mode(self):
-        return Mode.PHOENIX
-
     def on_prep_load(self):
         window_handles_on_top_phoenix_z_ordered = get_z_ordered_windows()
         for i,wh in enumerate(window_handles_on_top_phoenix_z_ordered):

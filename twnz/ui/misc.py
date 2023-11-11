@@ -6,10 +6,10 @@ from twnz.ui.frame import NostyFrame
 
 
 class MessageBox(NostyFrame):
-    def __init__(self, message: str, button_text: str = "Continue"):
+    def __init__(self, message: str, button_text: str = "Continue", title_tail: str = " - Message Box"):
         self.message = message
         self.button_text = button_text
-        NostyFrame.__init__(self, BASE_NOSTY_TITLE + " - Select Client", 150)
+        NostyFrame.__init__(self, BASE_NOSTY_TITLE + title_tail, 150)
 
     def setup_middle(self, layout_to_add_widget: QVBoxLayout):
         self.text = QLabel(text=self.message)

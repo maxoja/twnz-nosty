@@ -8,6 +8,7 @@ from pygetwindow import Win32Window
 import twnz
 from twnz import string_dist
 from twnz.bot.instances import NostyBotInstance
+from twnz.pb.models import FeatureModel
 from twnz.ui.instances import BotWinInstance, NosTaleWinInstance
 from twnz.win.sread import Locator
 
@@ -91,14 +92,15 @@ def on_exit_unlock():
 
 
 class NostyInstanceManager:
-    def __init__(self):
+    def __init__(self, activated_features: List[FeatureModel]):
+        self.features = activated_features[::]
         self.instances: List[NostyBotInstance] = []
 
     def create_all(self):
         # find all nostale wins if start first time
         phoenix_wins = BotWinInstance.get_all()
         ready_phoenix_wins = [p for p in phoenix_wins if p.ready_to_match()]
-        self.instances = match_v3(ready_phoenix_wins)
+        self.instances = match_v3(ready_phoenix_wins, self.features)
 
     def __get_matched_pbots(self):
         return [i.bot_win for i in self.instances]
@@ -129,7 +131,7 @@ class NostyInstanceManager:
         if len(new_pbots) == 0:
             return []
         # self.pbot_checked_once.update(new_pbots)
-        new_matches = match_v3(new_pbots)
+        new_matches = match_v3(new_pbots, self.features)
         self.instances.extend(new_matches)
         return new_matches
 
@@ -190,7 +192,7 @@ def find_best_pbot_win_for_game_win(game_win: Win32Window, pbots: List[BotWinIns
     return pbots[0]
 
 
-def match_v3(phoenix_wins: List[BotWinInstance]) -> List[NostyBotInstance]:
+def match_v3(phoenix_wins: List[BotWinInstance], features: List[FeatureModel]) -> List[NostyBotInstance]:
     if len(phoenix_wins) == 0:
         return []
     result = []
@@ -200,5 +202,5 @@ def match_v3(phoenix_wins: List[BotWinInstance]) -> List[NostyBotInstance]:
         if game_win is None:
             continue
         game_ins = NosTaleWinInstance(game_win.getHandle())
-        result.append(NostyBotInstance(game_ins, p))
+        result.append(NostyBotInstance(game_ins, p, features))
     return result

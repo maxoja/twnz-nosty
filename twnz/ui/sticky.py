@@ -9,12 +9,14 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QMessageBox, QAppl
 import pywinctl as pwc
 import twnz
 import twnz.win.all
+from twnz.bot.enums import Feature, Mode
 from twnz.bot.models import NostyStates
 
 
 class SmallWindow(QMainWindow):
     count = 0
-    def __init__(self, target_title, mode_cb=None, start_cb=None, stop_cb=None, player_name="Untitled.txt"):
+
+    def __init__(self, target_title, enabled_modes: List[Mode], mode_cb=None, start_cb=None, stop_cb=None, player_name="Untitled.txt"):
         super().__init__()
         SmallWindow.count += 1
         self.target_title = target_title  # Store the target window title
@@ -53,17 +55,14 @@ class SmallWindow(QMainWindow):
         self.nav_button.setStyleSheet('QPushButton {background: grey; color: white; padding-bottom:2px;};')
         # self.nav_button.setStyleSheet('QPushButton::menu-indicator{ image: url(src/search_icon_tiny.png); background: grey; }; QPushButton {background: grey; color: white; padding-bottom:2px;};')
 
-        self.nav_actions = []
+        self.nav_actions: List[QAction] = []
         self.nav_menu = QMenu()
         self.nav_button.setMenu(self.nav_menu)
 
         # Create a QMenu for the dropdown options
         self.mode_menu = QMenu()
         self.mode_actions = []
-        for mode in twnz.bot.enums.Mode:
-            if mode != twnz.bot.enums.Mode.PHOENIX:
-                # intentional for first free version
-                continue
+        for mode in enabled_modes:
             option_action = QAction(mode, self, checkable=True)
             option_action.triggered.connect(self.on_mode_selected)
             if mode == NostyStates.INITIAL_MODE:
@@ -126,6 +125,11 @@ class SmallWindow(QMainWindow):
         self.start_button.setStyleSheet(ss)
 
     def set_party_selector(self, new_selector_actions: List[QAction]):
+        current_action_names = set([a.text() for a in self.nav_actions])
+        new_action_names = set([a.text() for a in new_selector_actions])
+        if current_action_names == new_action_names:
+            return
+
         for a in self.nav_actions:
             self.nav_menu.removeAction(a)
         self.nav_actions = new_selector_actions[::]

@@ -1,5 +1,4 @@
 from twnz import phoenix
-from twnz.bot.enums import Mode
 from twnz.bot.models import NostyStates
 from twnz.ui.instances import BotWinInstance
 from twnz.ui.sticky import SmallWindow
@@ -11,9 +10,6 @@ class NostyEmptyLogic:
         self.states = states
         self.ctrl_win = ctrl_win
         self.pbot_win = pbot_win
-
-    def get_mode(self):
-        return Mode.NONE
 
     def on_prep_load(self):
         pass

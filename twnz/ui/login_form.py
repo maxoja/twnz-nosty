@@ -1,3 +1,5 @@
+from typing import List
+
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
@@ -7,6 +9,7 @@ from pocketbase import PocketBase  # Import PocketBase from your module
 from twnz.const import BASE_NOSTY_TITLE
 from twnz.pb import flows, devices
 from twnz import resource
+from twnz.pb.models import FeatureModel
 from twnz.ui.const import *
 from twnz.ui.banner import Hammy
 from twnz.ui.frame import NostyFrame
@@ -14,8 +17,10 @@ from twnz.ui.frame import NostyFrame
 
 class LoginResult:
     def __init__(self):
-        self.checked = False
+        self.god = True
         self.success = False
+        self.feature_enums = []
+        self.features: List[FeatureModel] = []
 
 
 class LoginApplication(NostyFrame):
@@ -111,13 +116,14 @@ class LoginApplication(NostyFrame):
                 return
 
         credits_left = flows.get_credits(self.pb_client)
-        active_features = flows.get_active_features(self.pb_client)
-        print(active_features)
-        if credits_left > 0:
+        self.out.features = flows.get_active_features(self.pb_client)
+        self.out.feature_enums = [f.enum_name for f in self.out.features]
+        has_base_feature = 'BASE' in self.out.feature_enums
+        if credits_left > 0 and has_base_feature:
             msg = f"You have {credits_left} credits in your account.\n\n"
             msg += f"Active features enabled\n"
-            for f in active_features:
-                msg += "- " + str(f['display_name'])+"\n"
+            for f in self.out.features:
+                msg += "- " + f.display_name +"\n"
             msg += f"\nNosty Bot is Starting"
             self.out.success = True
             self.show_info("Login Success", msg)
@@ -127,11 +133,14 @@ class LoginApplication(NostyFrame):
             else:
                 resource.save_cred('', '', False)
 
-            print('closing app')
+            print('closing login form')
             self.close()
             # TODO: start the bot, show credits
         else:
-            msg = f"You have no credit left, please contact admin for a top-up"
+            if has_base_feature:
+                msg = f"You have no credit left, please contact admin for a top-up"
+            else:
+                msg = f'You have no base feature enabled, please contact admin for feature enabling'
             self.show_info("Login Result", msg)
 
     def perform_activation(self):

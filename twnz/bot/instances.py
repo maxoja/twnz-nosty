@@ -8,34 +8,33 @@ from win32ctypes.pywin32 import pywintypes
 import twnz
 import twnz.win.all
 from twnz import phoenix
-from twnz.bot import enums, base, qol, more
-from twnz.bot.enums import Mode
+from twnz.bot import enums
+from twnz.bot.enums import Mode, Feature
+from twnz.bot.maps import feature_to_modes, mode_to_logic_class
 from twnz.bot.models import NostyStates
+from twnz.pb.models import FeatureModel
 from twnz.ui.instances import NosTaleWinInstance, BotWinInstance
 from twnz.ui.sticky import SmallWindow, update_small_windows_positions
 
 
 def get_logic_for_mode(m: enums.Mode, api: phoenix.Api, states: NostyStates, ctrl_win: SmallWindow, pbot_win: BotWinInstance):
-    if m == enums.Mode.NONE:
-        return base.NostyEmptyLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.PHOENIX:
-        return qol.NostyPhoenixLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.BROKEN_GURI:
-        return more.NostyGuriLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.PICK_ITEMS_ONESHOT:
-        return more.NostyQuickHandLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.PICK_ITEMS_FOREVER:
-        return more.NostyQuickHandForeverLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.EXPERIMENT:
-        return more.NostyExperimentLogic(api, states, ctrl_win, pbot_win)
-    else:
-        raise Exception("Undefined map for mode " + m)
+    logic_class = mode_to_logic_class(m)
+    return logic_class(api, states, ctrl_win, pbot_win)
+
+
+def features_to_modes(features: List[FeatureModel]) -> List[Mode]:
+    result = []
+    for f in features:
+        f_enum = Feature(f.enum_name)
+        modes = feature_to_modes(f_enum)
+        result += [m for m in modes if m not in result]
+    return result
 
 
 class NostyBotInstance:
-    def __init__(self, game_win: NosTaleWinInstance, bot_win: BotWinInstance):
+    def __init__(self, game_win: NosTaleWinInstance, bot_win: BotWinInstance, features: List[FeatureModel]):
         player_name = bot_win.get_player_name()
-        self.ctrl_win = SmallWindow(player_name, player_name=player_name)
+        self.ctrl_win = SmallWindow(player_name, features_to_modes(features), player_name=player_name)
         self.game_win = game_win
         self.bot_win = bot_win
         self.api = phoenix.Api(bot_win.get_port())
