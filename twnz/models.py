@@ -5,6 +5,7 @@ class MapEntity:
         self.npcs = [NpcEntity(npc) for npc in map_entity.get('npcs', [])]
         self.players = [PlayerEntity(player) for player in map_entity.get('players', [])]
         self.type = map_entity.get('type', 0)
+        self.json = map_entity
 
     def find_item_with_id(self, id):
         for i in self.items:
