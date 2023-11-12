@@ -5,7 +5,7 @@ from typing import Optional, List, Tuple, Dict
 import twnz.bot.base
 from twnz import fetch_current_y_x_map_id, image_to_binary_array, walk_to, find_intersection_xy, fetch_map_entities, \
     fetch_player_info, cal_distance, phoenix, find_walk_path_granular, is_walkable, \
-    find_nearest_walkable_cell
+    find_nearest_walkable_cell, TimeCheck
 from twnz.models import ItemEntity, MapEntity
 
 
@@ -113,8 +113,9 @@ class NostyGuriLogic(twnz.bot.base.NostyEmptyLogic):
             print(self.path_points_yx)
             self.next_step_target_yx = self.path_points_yx[0]
 
-class ItemObservation:
-    def __init__(self, item: ItemEntity, cooldown: float=30):
+
+class ItemTimer:
+    def __init__(self, item: ItemEntity, cooldown: float = 29):
         self.item = item
         self.t = time.time()
         self.cooldown = cooldown
@@ -125,7 +126,7 @@ class ItemObservation:
     def item_id(self):
         return self.item.id
 
-    def outdated(self):
+    def timeout(self):
         return time.time() - self.t >= self.cooldown
 
     def reset_count(self):
@@ -138,13 +139,33 @@ class ItemObservation:
         return False
 
     @staticmethod
-    def find_obv_of_item(observations: List['ItemObservation'], item: Optional[ItemEntity]) -> Optional['ItemObservation']:
+    def find_obv_of_item(observations: List['ItemTimer'], item: Optional[ItemEntity]) -> Optional['ItemTimer']:
         if item is None:
             return None
         for o in observations:
             if o.of_item(item):
                 return o
         return None
+
+
+class ItemTempBan(ItemTimer):
+    def __init__(self, item: ItemEntity):
+        super(ItemTempBan, self).__init__(item)
+        self.retried = False
+
+    def ready_for_second_chance(self):
+        return self.timeout()
+
+    def mark_retried(self):
+        if not self.ready_for_second_chance():
+            raise Exception()
+        self.retried = True
+
+    def reset_count(self):
+        raise Exception("Item Ban can't be reset")
+
+    def gave_up(self):
+        return self.timeout() and self.retried
 
 
 def valid_item(i: ItemEntity) -> bool:
@@ -172,18 +193,20 @@ class NostyQuickHandForeverLogic(twnz.bot.base.NostyEmptyLogic):
 
     def on_start_clicked(self):
         print('on_start forever')
-        self.next_act_allow = self.get_next_act_time()
-        self.next_check_allow = time.time()
-        self.radius = 1000
+        self.next_act_timer = TimeCheck(NostyQuickHandForeverLogic.DELAY_ACT, swing=NostyQuickHandForeverLogic.BUFFER_ACT)
+        self.next_check_timer = TimeCheck(NostyQuickHandForeverLogic.DELAY_CHECK)
         self.target_item = None
-        self.others_item_observations: List[ItemObservation] = []
-        self.attempted_item_ids: List[int] = []  # we will only attempt an item once
-        self.recently_picked_items: List[ItemObservation] = []
+        self.banned_items: List[ItemTempBan] = []
+        self.items_to_be_verified: List[ItemTimer] = []
 
-    def __get_item_top_candidate(self, latest_map: MapEntity) -> Optional[ItemEntity]:
-        me = fetch_player_info(self.api)
-        if me is None:
-            return None
+    def __add_ban_new_others_items(self, me: Dict, latest_map: MapEntity):
+        for i in latest_map.items:
+            if ItemTimer.find_obv_of_item(self.banned_items, i) is None:
+                if not_mine_for_sure(me, i):
+                    print('adding ban', i)
+                    self.banned_items.append(ItemTempBan(i))
+
+    def __get_item_top_candidate(self, me: dict, latest_map: MapEntity) -> Optional[ItemEntity]:
         me_y, me_x = me['y'], me['x']
         candidates: List[ItemEntity] = []
         for i in latest_map.items:
@@ -192,106 +215,92 @@ class NostyQuickHandForeverLogic(twnz.bot.base.NostyEmptyLogic):
             if has_certain_ownership(me, i):
                 candidates.append(i)
                 continue
-            if i.id in self.attempted_item_ids:
+            temp_ban: ItemTempBan = ItemTimer.find_obv_of_item(self.banned_items, i)
+            if temp_ban is not None:
+                if not temp_ban.ready_for_second_chance() or temp_ban.gave_up():
+                    continue
+            if ItemTimer.find_obv_of_item(self.items_to_be_verified, i) is not None:
                 continue
-            recent_pick_obv = ItemObservation.find_obv_of_item(self.recently_picked_items, i)
-            if recent_pick_obv is not None:
-                # checking for success/failure will happen in check method
-                continue
-
-            others_item_obv = ItemObservation.find_obv_of_item(self.others_item_observations, i)
-            if not_mine_for_sure(me, i):
-                if others_item_obv is None:
-                    print("observed other's item", i)
-                    self.others_item_observations.append(ItemObservation(i))
-                    continue
-                if others_item_obv.outdated():
-                    print('putting outdated item to candidate')
-                    candidates.append(i)
-                    self.others_item_observations.remove(others_item_obv)
-                    # others_item_obv.reset_count()
-                    continue
-            else:
-                # attempt before put it on observation list
-                if others_item_obv is None:
-                    candidates.append(i)
-                    continue
-                if others_item_obv.outdated():
-                    candidates.append(i)
-                    # self.others_item_observations
-                    others_item_obv.reset_count()
-                    continue
+            candidates.append(i)
 
         def s(item: ItemEntity):
             return cal_distance((me_y, me_x), (item.y, item.x))
-        candidates.sort(key=s)
 
+        candidates.sort(key=s)
         return candidates[0] if len(candidates) > 0 else None
+
+    def __give_second_chance_to_banned_if_timout(self):
+        for b in self.banned_items:
+            if b.timeout():
+                if b not in self.second_chance_items:
+                    self.second_chance_items.append(b.item)
+                    b.reset_count() # may b not
+
+    def __process_recently_picked_items_and_remove_from_list(self, latest_map: MapEntity):
+        new_queue = []
+        for to_check in self.items_to_be_verified:
+            if not to_check.timeout():
+                new_queue.append(to_check)
+                continue
+            if latest_map.find_item_with_id(to_check.item_id()) is None:
+                print('pickup check -> item is gone -> successfully picked item')
+                continue
+            temp_ban: ItemTempBan = ItemTimer.find_obv_of_item(self.banned_items, to_check.item)
+            if temp_ban is None:
+                print("pickup check -> item is still there -> failed to pick -> temp ban", to_check.item)
+                self.banned_items.append(ItemTempBan(to_check.item))
+                continue
+            temp_ban.mark_retried()
+        self.items_to_be_verified = new_queue
 
     def __check(self):
         latest_map = fetch_map_entities(self.api)
-        if latest_map is None:
+        me_now = fetch_player_info(self.api)
+        if latest_map is None or me_now is None:
             return
+        me_y, me_x = me_now['y'], me_now['x']
 
-        to_remove_rpis = []
-        for rpi in self.recently_picked_items:
-            if not rpi.outdated():
-                # it's not yet ready to check
-                continue
-            if latest_map.find_item_with_id(rpi.item_id()) is None:
-                print('rpi check -> successfully picked item -------')
-                self.attempted_item_ids.append(rpi.item_id())
-            else:
-                print("rpi check -> failed to pick -> add observations", rpi.item)
-                self.others_item_observations.append(ItemObservation(rpi.item))
-            to_remove_rpis.append(rpi)
+        def s(item: ItemEntity):
+            return cal_distance((me_y, me_x), (item.y, item.x))
 
-        [self.recently_picked_items.remove(rpi) for rpi in to_remove_rpis]
+        # deal with old stuff
+        self.__process_recently_picked_items_and_remove_from_list(latest_map)
+        self.__add_ban_new_others_items(me_now, latest_map)
 
-        if self.target_item is not None and (
-                self.target_item.id in self.attempted_item_ids or
-                ItemObservation.find_obv_of_item(self.recently_picked_items, self.target_item) is not None or
-                ItemObservation.find_obv_of_item(self.others_item_observations, self.target_item) is not None or
-                latest_map.find_item_with_id(self.target_item.id) is None
-        ):
-            self.target_item = None
+        # means to drop target
+        # - it was recently picked up and waiting for check
+        # - it was checked and marked as banned and wait for second chance
+        # - item not on map anymore
+        if self.target_item is not None:
+            for i in range(1):
+                if ItemTimer.find_obv_of_item(self.items_to_be_verified, self.target_item) is not None:
+                    self.target_item = None
+                    break
 
-        # always find new closest item
-        # top_candidate = self.__get_item_top_candidate(latest_map)
-        me_now = None
+                temp_ban: ItemTempBan = ItemTimer.find_obv_of_item(self.banned_items, self.target_item)
+                if temp_ban is not None:
+                    if not temp_ban.ready_for_second_chance() or temp_ban.gave_up():
+                        self.target_item = None
+                        break
+
+                if latest_map.find_item_with_id(self.target_item.id) is None:
+                    self.target_item = None
+                    break
+
         dist_target = None
 
         if self.target_item is None:
-            top_candidate = self.__get_item_top_candidate(latest_map)
+            top_candidate = self.__get_item_top_candidate(me_now, latest_map)
             self.target_item = top_candidate
-            # print('set target from candidate', top_candidate)
-        # else:
-        #     if top_candidate is not None:
-        #         if self.target_item.id != top_candidate.id:
-        #             # not already same item
-        #             me_now = fetch_player_info(self.api)
-        #             dist_target = cal_distance((self.target_item.y, self.target_item.x), (me_now['y'], me_now['x']))
-        #             dist_cand = cal_distance((top_candidate.y, top_candidate.x), (me_now['y'], me_now['x']))
-        #             if dist_cand < dist_target:
-        #                 self.target_item = top_candidate
-        #                 dist_target = dist_cand
+            print('set target from candidate', top_candidate)
 
         if self.target_item is None:
             # no target and no candidate
             return
 
-        map_ent = latest_map
-        if map_ent is None:
-            # accidental retrieval failure
-            return
-
-        if time.time() >= self.next_act_allow:
-            if me_now is None:
-                me_now = fetch_player_info(self.api)
-                if me_now is None:
-                    return
+        if self.next_act_timer.allow_and_reset():
             if dist_target is None:
-                dist_target = cal_distance((me_now['y'], me_now['x']), (self.target_item.y, self.target_item.x))
+                dist_target = cal_distance((me_y, me_x), (self.target_item.y, self.target_item.x))
 
             dist_str = f'{dist_target:2f}'
             if dist_target > NostyQuickHandForeverLogic.PICK_DIST:
@@ -300,17 +309,11 @@ class NostyQuickHandForeverLogic(twnz.bot.base.NostyEmptyLogic):
             else:
                 print(self.target_item.id, 'picking item', dist_str)
                 self.api.send_packet(f'get 1 {me_now["id"]} {self.target_item.id}')
-                self.recently_picked_items.append(ItemObservation(self.target_item, cooldown=2))
-            self.next_act_allow = self.get_next_act_time()
-
-    def get_next_act_time(self):
-        return time.time() + NostyQuickHandForeverLogic.DELAY_ACT + random.random()*NostyQuickHandForeverLogic.BUFFER_ACT
-
+                self.items_to_be_verified.append(ItemTimer(self.target_item, cooldown=2))
 
     def on_all_tick(self, json_msg: dict):
-        if time.time() >= self.next_check_allow:
+        if self.next_act_timer.allow_and_reset():
             self.__check()
-            self.next_check_allow = time.time() + NostyQuickHandForeverLogic.DELAY_CHECK
 
 
 class NostyExperimentLogic(twnz.bot.base.NostyEmptyLogic):

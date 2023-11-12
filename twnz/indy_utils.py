@@ -1,4 +1,5 @@
 import math
+import random
 import time
 
 import numpy as np
@@ -66,12 +67,14 @@ def cal_distance(yx1: tuple, yx2: tuple):
 
 
 class TimeCheck:
-    def __init__(self, cooldown: float, allow_now: bool=True):
+    def __init__(self, cooldown: float, allow_now: bool=True, swing: float=0):
         self.cooldown = cooldown
-        self.next_allow = time.time() if allow_now else time.time() + cooldown
+        self.next_allow = time.time()
+        self.swing = swing
+        if allow_now: self.reset()
 
     def reset(self):
-        self.next_allow = time.time() + self.cooldown
+        self.next_allow = time.time() + self.cooldown + self.swing * random.random()
 
     def allow_and_reset(self) -> bool:
         if time.time() >= self.next_allow:
