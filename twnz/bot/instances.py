@@ -7,35 +7,34 @@ from win32ctypes.pywin32 import pywintypes
 
 import twnz
 import twnz.win.all
-from twnz import phoenix
-from twnz.bot import enums, base, qol, more
-from twnz.bot.enums import Mode
+from twnz import phoenix, TimeCheck
+from twnz.bot import enums
+from twnz.bot.enums import Mode, Feature
+from twnz.bot.maps import feature_to_modes, mode_to_logic_class
 from twnz.bot.models import NostyStates
+from twnz.pb.models import FeatureModel
 from twnz.ui.instances import NosTaleWinInstance, BotWinInstance
 from twnz.ui.sticky import SmallWindow, update_small_windows_positions
 
 
 def get_logic_for_mode(m: enums.Mode, api: phoenix.Api, states: NostyStates, ctrl_win: SmallWindow, pbot_win: BotWinInstance):
-    if m == enums.Mode.NONE:
-        return base.NostyEmptyLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.PHOENIX:
-        return qol.NostyPhoenixLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.BROKEN_GURI:
-        return more.NostyGuriLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.PICK_ITEMS_ONESHOT:
-        return more.NostyQuickHandLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.PICK_ITEMS_FOREVER:
-        return more.NostyQuickHandForeverLogic(api, states, ctrl_win, pbot_win)
-    elif m == enums.Mode.EXPERIMENT:
-        return more.NostyExperimentLogic(api, states, ctrl_win, pbot_win)
-    else:
-        raise Exception("Undefined map for mode " + m)
+    logic_class = mode_to_logic_class(m)
+    return logic_class(api, states, ctrl_win, pbot_win)
+
+
+def features_to_modes(features: List[FeatureModel]) -> List[Mode]:
+    result = []
+    for f in features:
+        f_enum = Feature(f.enum_name)
+        modes = feature_to_modes(f_enum)
+        result += [m for m in modes if m not in result]
+    return result
 
 
 class NostyBotInstance:
-    def __init__(self, game_win: NosTaleWinInstance, bot_win: BotWinInstance):
+    def __init__(self, game_win: NosTaleWinInstance, bot_win: BotWinInstance, features: List[FeatureModel]):
         player_name = bot_win.get_player_name()
-        self.ctrl_win = SmallWindow(player_name, player_name=player_name)
+        self.ctrl_win = SmallWindow(player_name, features_to_modes(features), player_name=player_name)
         self.game_win = game_win
         self.bot_win = bot_win
         self.api = phoenix.Api(bot_win.get_port())
@@ -43,6 +42,7 @@ class NostyBotInstance:
         self.bind_ctrl()
         self.load_logic__this_should_be_called_later(NostyStates.INITIAL_MODE)
         self.should_be_removed = False
+        self.time_check_visibility = TimeCheck(0.2)
 
     def bind_ctrl(self):
         self.ctrl_win.start_cb = self.on_start_clicked
@@ -83,19 +83,22 @@ class NostyBotInstance:
         self.logic.on_load()
 
     def check_alive(self):
-        if not self.bot_win.ready_to_match():
-            return False
         try: win32gui.GetWindowRect(self.game_win.window_handle)
         except: return False
         try: win32gui.GetWindowRect(self.bot_win.window_handle)
         except: return False
+        if not self.bot_win.ready_to_match():
+            return False
         return True
 
     def update(self, party_selector_actions: List[QAction]):
         try:
             left, top, _, _ = self.game_win.get_rect()
             title = self.game_win.get_title()
-            visible = twnz.win.all.is_window_partially_visible(self.game_win.window_handle)
+            if self.time_check_visibility.allow_and_reset():
+                visible = twnz.win.all.is_window_partially_visible(self.game_win.window_handle)
+            else:
+                visible = None
             game_win_info = (left, top, title, visible)
             update_small_windows_positions([self.ctrl_win], [game_win_info], (110, 31))
             self.ctrl_win.set_party_selector(party_selector_actions)

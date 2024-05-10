@@ -11,6 +11,8 @@ def find_closest_monster_autoload(api, vnum_whitelist=None, vnum_blacklist=None)
         vnum_whitelist = []
     map_entity: MapEntity = fetch.fetch_map_entities(api)
     player_info: PlayerEntity = fetch.fetch_player_info(api)
+    if map_entity is None or player_info is None:
+        return None
     print(map_entity)
     return find_closest_monster(map_entity, player_info, vnum_whitelist, vnum_blacklist)
 

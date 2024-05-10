@@ -6,7 +6,11 @@ import win32con
 import win32gui
 from pywinctl._pywinctl_win import Win32Window
 
-from twnz.win.basic import get_foreground_win
+from twnz.win.basic import get_foreground_win, get_window_of_handle
+
+
+def show_win_with_small_delay_if_not_already_handle(handle: int):
+    return show_win_with_small_delay_if_not_already(get_window_of_handle(handle))
 
 
 def show_win_with_small_delay_if_not_already(window:Win32Window):

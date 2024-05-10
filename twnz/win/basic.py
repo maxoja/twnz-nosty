@@ -50,6 +50,10 @@ def get_all_handles():
     return handles
 
 
+def get_phoenix_titles():
+    return [ w.title for w in pwc.getAllWindows() if PHOENIX_TITLE_INFIX in w.title ]
+
+
 def get_phoenix_windows():
     return [ w for w in pwc.getAllWindows() if PHOENIX_TITLE_INFIX in w.title ]
 

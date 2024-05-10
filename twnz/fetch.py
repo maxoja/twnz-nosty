@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional, Dict
 
 import json
 from time import sleep
@@ -24,11 +24,13 @@ def fetch_current_y_x_map_id(api: phoenix.Api):
             sleep(config.API_INTERVAL)
 
 
-def fetch_player_info(api: phoenix.Api):
-    api.query_player_information()
-    # at this point assume that api.working()
-    while api.working():
-        if not api.empty():
+def fetch_player_info(api: phoenix.Api) -> Optional[Dict]:
+    try:
+        # at this point assume that api.working()
+        api.query_player_information()
+        while True:
+            if api.empty():
+                continue
             msg = api.get_message()
             json_msg = json.loads(msg)
 
@@ -37,15 +39,17 @@ def fetch_player_info(api: phoenix.Api):
 
             packet = json_msg['player_info']
             return packet
-        else:
-            sleep(config.API_INTERVAL)
+    except:
+        return None
 
 
-def fetch_map_entities(api: phoenix.Api) -> MapEntity:
-    api.query_map_entities()
-    # at this point assume that api.working()
-    while api.working():
-        if not api.empty():
+def fetch_map_entities(api: phoenix.Api) -> Optional[MapEntity]:
+    try:
+        # at this point assume that api.working()
+        api.query_map_entities()
+        while True:
+            if api.empty():
+                continue
             msg = api.get_message()
             json_msg = json.loads(msg)
 
@@ -53,8 +57,8 @@ def fetch_map_entities(api: phoenix.Api) -> MapEntity:
                 continue
 
             return MapEntity(json_msg)
-        else:
-            sleep(config.API_INTERVAL)
+    except:
+        return None
 
 
 def print_nicely(o: Union[dict, list], depth=0):
